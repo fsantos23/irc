@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <map>
+#include <sstream>
 #include <vector>
 
 class Client {
@@ -29,6 +30,9 @@ class Client {
 		std::string getNick() {return _nickname;};
 		std::string getUser() {return _user;};
 		std::string getPass() {return _pass;};
+		void setNick(std::string str) {_nickname = str;};
+		void setUser(std::string str) {_user = str;}
+		void setPass(std::string str) {_pass = str;}
 };
 
 #endif

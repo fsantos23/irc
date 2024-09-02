@@ -37,7 +37,9 @@ void Server::initServer()
                 if (pfd.fd == _sockfd)
                     acceptNewClient();
                 else
+				{
                     handleClientMessage(pfd.fd);
+				}
             }
 		}
 	}
@@ -153,13 +155,13 @@ void Server::handleClientMessage(int client_fd)
     buffer[bytes_received] = '\0';
 
 	std::vector<std::string> tokens;
-    char* token = std::strtok(buffer, " ");
+    std::istringstream iss(buffer);
+    std::string token;
 
-    while (token != nullptr) {
+    while (iss >> token)
+	{
         tokens.push_back(token);
-        token = std::strtok(nullptr, " ");
-    }
-
+	}
 	handleInput(tokens, client_fd);
 }
 
@@ -175,8 +177,57 @@ void Server::handleInput(std::vector<std::string> str, int client_fd)
 			break;
 		}
 	}
-	if(_cl[j].getNick().empty() || _cl[j].getPass().empty() || _cl[j].getUser().empty())
-	{
-		
-	}
+	if(checkEntry(str, &_cl[j]))
+		return ;
+	/* mainCommands(str, &_cl[j]); */
 }
+
+int Server::checkEntry(std::vector<std::string> str, Client *cl)
+{
+	//handle of main info client
+	std::string entry_array[] = {"USER", "NICK", "PASS"};
+	std::vector<std::string> entry(entry_array, entry_array + 3);
+
+	std::string user_array[] = {cl->getUser(), cl->getNick(), cl->getPass()};
+	std::vector<std::string> user(user_array, user_array + 3);
+
+	for(int i = 0; i < 3; i++)
+	{
+		if(str[0] == entry[i])
+		{
+			if(user[i].empty())
+			{
+				if (i == 0)
+					cl->setUser(str[1]);
+				else if (i == 1)
+					cl->setNick(str[1]);
+				else if (i == 2 && str[1] == _password)
+				{
+					cl->setPass(str[1]);
+					sendColoredMessage(cl->getFd(), "Correct password\n", GRE);
+					send(cl->getFd(), cl->getPass().c_str(), sizeof(cl->getPass().c_str()) + 1, 0);
+				}
+				else if (i == 2 && str[1] != _password)
+					sendColoredMessage(cl->getFd(), "Wrong password\n", RED);
+			}
+			if(!user[i].empty())
+				send(cl->getFd(), "Alreday set\n", 13, 0);
+			return 1;
+		}
+	}
+	for(int i = 0; i < 3; i++)
+	{
+		if(user[i].empty())
+		{
+			sendColoredMessage(cl->getFd(), "You have to create an account first\n", RED);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/* void mainCommands(std::vector<std::string> str, Client *cl)
+{
+	std::string cmd[] = {"JOIN", "PRIVMSG"}
+	
+} */

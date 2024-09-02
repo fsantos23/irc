@@ -1,4 +1,4 @@
-SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp
+SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp ./srcs/utils.cpp
 
 OBJS		= $(SRCS:.cpp=.o)
 

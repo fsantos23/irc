@@ -1,6 +1,6 @@
 #include "../includes/Client.hpp"
 
-Client::Client(void) : _fd(-1), _ip(0), _nickname(NULL), _user(NULL), _pass(NULL)
+Client::Client(void) : _fd(-1), _ip(""), _nickname(""), _user(""), _pass("")
 {
 	std::cout << "Client created" << std::endl;
 }
