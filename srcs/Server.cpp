@@ -167,6 +167,7 @@ void Server::handleClientMessage(int client_fd)
 
 void Server::handleInput(std::vector<std::string> str, int client_fd)
 {
+	//aqui vai ficar a parte do parsing antes da função check entry
 	int j = 0;
 
 	for(size_t i = 0; i < _cl.size(); i++)
