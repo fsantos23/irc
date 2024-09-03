@@ -1,12 +1,17 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/03 17:19:58 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/03 17:20:01 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 #define SERVER_HPP
-
-//-----------------------------------------------//
-#define RED "\e[1;31m"
-#define WHI "\e[0;37m"
-#define GRE "\e[1;32m"
-#define YEL "\e[1;33m"
-//-----------------------------------------------//
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -23,14 +28,17 @@
 #include <poll.h>
 #include <algorithm>
 #include <string>
-#include "Client.hpp"
-#include "utils.hpp"
-#include "Channel.hpp"
+
+#include "../includes/Client.hpp"
+#include "../includes/Utils.hpp"
+#include "../includes/Channel.hpp"
+#include "../includes/Command.hpp"
 
 class Client;
 class Channel;
 
-class Server {
+class Server
+{
 	private:
 		int _port;
 		std::string _password;
@@ -53,8 +61,8 @@ class Server {
 		void clearClient(int fd);
 		void handleClientMessage(int client_fd);
 		void handleInput(std::vector<std::string> str, int client_fd);
-		int checkEntry(std::vector<std::string> str, Client *cl);
-		int mainCommands(std::vector<std::string> str, Client *cl);
+		int checkIfRegistered(std::vector<std::string> str, Client *cl);
+		void mainCommands(std::vector<std::string> str, Client *cl);
 		void manageChannels(std::vector<Channel> _ch);
 };
 

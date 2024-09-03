@@ -1,34 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Channel.hpp                                        :+:      :+:    :+:   */
+/*   Command.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 17:20:16 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/03 17:20:19 by pviegas          ###   ########.fr       */
+/*   Created: 2024/08/21 14:55:29 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/03 14:41:41 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CHANNEL_HPP
-#define CHANNEL_HPP
+#pragma once
 
-#include "Server.hpp"
+#include <string>
+#include <vector>
 
-class Channel
-{
-	private:
-		std::string _name;
-		std::vector<int> _sockcl;
+class Client;
 
-	public:
-		Channel(std::string _name);
-		~Channel();
-
-		void createChannel(Client *cl);
-		void addClient(Client *cl);
-		void clearClient(int cl_fd);
-		void broadcast(Client* self, const std::string &msg);
-};
-
-#endif
+void cmdJoin(std::vector<std::string> cmd, Client *cl);
