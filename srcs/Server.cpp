@@ -37,9 +37,7 @@ void Server::initServer()
                 if (pfd.fd == _sockfd)
                     acceptNewClient();
                 else
-				{
                     handleClientMessage(pfd.fd);
-				}
             }
 		}
 	}
@@ -196,31 +194,34 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 	{
 		if(str[0] == entry[i])
 		{
-			if(user[i].empty())
+			if(user[i] == "*" || user[i].empty())
 			{
 				if (i == 0)
 					cl->setUser(str[1]);
 				else if (i == 1)
 					cl->setNick(str[1]);
 				else if (i == 2 && str[1] == _password)
-				{
 					cl->setPass(str[1]);
-					sendColoredMessage(cl->getFd(), "Correct password\n", GRE);
-					send(cl->getFd(), cl->getPass().c_str(), sizeof(cl->getPass().c_str()) + 1, 0);
-				}
 				else if (i == 2 && str[1] != _password)
-					sendColoredMessage(cl->getFd(), "Wrong password\n", RED);
+				{
+					send(cl->getFd(), cl->getNick().c_str(), cl->getNick().length(), 0);
+					send(cl->getFd(), " :Password incorrect\r\n", 21, 0);
+				}
 			}
-			if(!user[i].empty())
-				send(cl->getFd(), "Alreday set\n", 13, 0);
+			if(user[i] != "*")
+			{
+				std::string message = ":" + cl->getNick() + " :You may not reregister\r\n";
+				send(cl->getFd(), message.c_str(), message.length(), 0);
+			}
 			return 1;
 		}
 	}
 	for(int i = 0; i < 3; i++)
 	{
-		if(user[i].empty())
+		if(user[i] == "*")
 		{
-			sendColoredMessage(cl->getFd(), "You have to create an account first\n", RED);
+			send(cl->getFd(), cl->getNick().c_str(), cl->getNick().length(), 0);
+			send(cl->getFd(), " :You have not registered\r\n", 26, 0);
 			return 1;
 		}
 	}
@@ -229,6 +230,11 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 
 /* void mainCommands(std::vector<std::string> str, Client *cl)
 {
-	std::string cmd[] = {"JOIN", "PRIVMSG"}
+	std::string cmd[] = {"JOIN", "PRIVMSG"};
+	std::vector<std::string> vc(cmd, cmd + 2);
 	
+	for(int i = 0; i < vc.size(); i++)
+	{
+
+	}
 } */
