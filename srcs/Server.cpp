@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/03 11:35:30 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/03 17:19:20 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/Server.hpp"
 
 Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _signal(false), _sockcl(0)
@@ -14,7 +26,7 @@ void Server::initServer()
 {
 	serSocket();
 
-	std::cout << GRE << "Server <" << _port << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Server running and listening on port: <" << _port << WHI << std::endl;
 	_signal = true;
 	while (true)
 	{
@@ -37,7 +49,9 @@ void Server::initServer()
                 if (pfd.fd == _sockfd)
                     acceptNewClient();
                 else
+				{
                     handleClientMessage(pfd.fd);
+				}
             }
 		}
 	}
@@ -138,29 +152,35 @@ void Server::clearClient(int fd)
 
 void Server::handleClientMessage(int client_fd)
 {
-    char buffer[1024];
+	// PFV
+	// confirmar o tamanho do buffer (512)
+	char buffer[1024];
 	memset(buffer, 0, sizeof(buffer));
-    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    if (bytes_received < 0)
-        throw(std::runtime_error("Failed receiving data from client."));
+	if (bytes_received < 0)
+		throw(std::runtime_error("Failed receiving data from client."));
 	else if (bytes_received == 0)
 	{
-        std::cout << "Client disconnected." << std::endl;
-        clearClient(client_fd);
-        return;
-    }
-    buffer[bytes_received] = '\0';
+		std::cout << "Client disconnected." << std::endl;
+		clearClient(client_fd);
+		return;
+	}
+	buffer[bytes_received] = '\0';
 
 	std::vector<std::string> tokens;
-    std::istringstream iss(buffer);
-    std::string token;
+	std::istringstream iss(buffer);
+	std::string token;
 
-    while (iss >> token)
+	while (iss >> token)
 	{
-        tokens.push_back(token);
+		tokens.push_back(token);
 	}
-	//aqui vai ficar a parte do parsing antes da função handleInput()
+
+	// PFV
+	// std::cout << "Received message from client (buffer): " << buffer << std::endl;
+	// print_tokens(tokens);
+
 	handleInput(tokens, client_fd);
 }
 
@@ -176,12 +196,16 @@ void Server::handleInput(std::vector<std::string> str, int client_fd)
 			break;
 		}
 	}
-	if(checkEntry(str, &_cl[j]))
-		return ;
-	/* mainCommands(str, &_cl[j]); */
+
+	// PFV
+	// comentado para testar o envio de mensagens	
+//	if(checkIfRegistered(str, &_cl[j]))
+//		return ;
+		
+	mainCommands(str, &_cl[j]);
 }
 
-int Server::checkEntry(std::vector<std::string> str, Client *cl)
+int Server::checkIfRegistered(std::vector<std::string> str, Client *cl)
 {
 	//handle of main info client
 	std::string entry_array[] = {"USER", "NICK", "PASS"};
@@ -194,47 +218,72 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 	{
 		if(str[0] == entry[i])
 		{
-			if(user[i] == "*" || user[i].empty())
+			if(user[i].empty())
 			{
 				if (i == 0)
 					cl->setUser(str[1]);
 				else if (i == 1)
 					cl->setNick(str[1]);
 				else if (i == 2 && str[1] == _password)
-					cl->setPass(str[1]);
-				else if (i == 2 && str[1] != _password)
 				{
-					send(cl->getFd(), cl->getNick().c_str(), cl->getNick().length(), 0);
-					send(cl->getFd(), " :Password incorrect\r\n", 21, 0);
+					cl->setPass(str[1]);
+					sendColoredMessage(cl->getFd(), "Correct password\n", GRE);
+					send(cl->getFd(), cl->getPass().c_str(), sizeof(cl->getPass().c_str()) + 1, 0);
 				}
+				else if (i == 2 && str[1] != _password)
+					sendColoredMessage(cl->getFd(), "Wrong password\n", RED);
 			}
-			if(user[i] != "*")
-			{
-				std::string message = ":" + cl->getNick() + " :You may not reregister\r\n";
-				send(cl->getFd(), message.c_str(), message.length(), 0);
-			}
+			if(!user[i].empty())
+				send(cl->getFd(), "Alreday set\n", 13, 0);
 			return 1;
 		}
 	}
+	
 	for(int i = 0; i < 3; i++)
 	{
-		if(user[i] == "*")
+		if(user[i].empty())
 		{
-			send(cl->getFd(), cl->getNick().c_str(), cl->getNick().length(), 0);
-			send(cl->getFd(), " :You have not registered\r\n", 26, 0);
+			sendColoredMessage(cl->getFd(), "You have to create an account first\n", RED);
 			return 1;
 		}
 	}
 	return 0;
 }
 
-/* void mainCommands(std::vector<std::string> str, Client *cl)
+void Server::mainCommands(std::vector<std::string> command, Client *cl)
 {
-	std::string cmd[] = {"JOIN", "PRIVMSG"};
-	std::vector<std::string> vc(cmd, cmd + 2);
-	
-	for(int i = 0; i < vc.size(); i++)
-	{
+	(void)cl;
 
-	}
-} */
+	if (command[0] == "NICK")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função NICK...\n");
+		}
+		else if (command[0] == "PING")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função PING...\n");
+		}
+		else if (command[0] == "QUIT")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função QUIT...\n");
+		}
+		else if (command[0] == "JOIN")
+		{
+			cmdJoin(command, cl);
+		}
+		else if (command[0] == "PART")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função PART...\n");
+		}
+		else if (command[0] == "KICK")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função KICK...\n");
+		}
+		else if (command[0] == "PRIVMSG")
+		{
+			sendMessageToClient(cl->getFd(), "Chama a função PRIVMSG...\n");
+		}
+		else
+		{
+			sendMessageToClient(cl->getFd(), "Unknown command\n");
+		}
+}
