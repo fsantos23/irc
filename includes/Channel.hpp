@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Channel.hpp                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 17:20:16 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/03 17:20:19 by pviegas          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
@@ -18,17 +6,51 @@
 class Channel
 {
 	private:
-		std::string _name;
-		std::vector<int> _sockcl;
+		std::string					_name;
+		std::map<int, Client *>		_clients;
+		std::map<int, Client *>		_operators;
+		bool						_inviteOnly;
+		std::map<int, Client *>		_invitedClients;
+		std::string					_key;
 
 	public:
 		Channel(std::string _name);
 		~Channel();
 
+		// Channel management
+		std::string& getChannelName();
 		void createChannel(Client *cl);
-		void addClient(Client *cl);
+		void setInviteOnly(bool value);
+		bool isInviteOnly() const;
+		void setMode(std::string mode, bool enable);
+
+		// Client management
+		bool isNewClient(int fd);
+		void addClient(int fd, Client* client);
 		void clearClient(int cl_fd);
+		int countClients();
+		void removeClient(int cl_fd);
+
+		// Operators management
+		bool isOperator(Client* cl) const;
+		void addOperator(Client* cl);
+		int countOperators();
+		void forceOperator();
+
+		// Invite management
+		void inviteClient(Client* cl);
+		bool isInvited(Client* cl);
+
+		// Key management
+		void setKey(const std::string& key);
+		void removeKey();
+		bool hasKey() const;
+		bool checkKey(const std::string& key);
+
+		// Utils
 		void broadcast(Client* self, const std::string &msg);
+		void sendMessageChannel(std::string msg);
+		void listChannelInfo() const;
 };
 
 #endif

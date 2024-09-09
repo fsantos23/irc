@@ -6,7 +6,7 @@
 #    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
-#    Updated: 2024/09/03 14:14:37 by pviegas          ###   ########.fr        #
+#    Updated: 2024/09/09 16:20:30 by pviegas          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -38,8 +38,7 @@ SRC_FILES =	ircserv.cpp \
 			Server.cpp \
 			Client.cpp \
 			Channel.cpp \
-			Utils.cpp \
-			Command.cpp
+			Utils.cpp
 
 OBJS = $(addprefix $(OBJ_DIR), $(SRC_FILES:.cpp=.o))
 

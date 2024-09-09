@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Client.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/03 17:20:10 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/03 17:20:12 by pviegas          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
@@ -26,8 +14,7 @@
 #include <sstream>
 #include <vector>
 
-class Client
-{
+class Client {
 	private:
 		int _fd;
 		std::string _ip;
@@ -37,15 +24,13 @@ class Client
 
 	public:
 		Client();
-
 		int getFd();
 		void setFd(int fd);
 		void setIp(std::string ip);
-
-		std::string getNick();
-		std::string getUser();
-		std::string getPass();
-
+		std::string getIp() {return _ip;};
+		std::string getNick() {return _nickname;};
+		std::string getUser() {return _user;};
+		std::string getPass() {return _pass;};
 		void setNick(std::string str) {_nickname = str;};
 		void setUser(std::string str) {_user = str;}
 		void setPass(std::string str) {_pass = str;}
