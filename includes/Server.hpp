@@ -72,6 +72,8 @@ class Server {
 		void INVITE(std::vector<std::string> cmd, Client* cl);
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
+		// PFV
+		void LISTINFO(std::vector<std::string> cmd, Client* cl);
 };
 
 #endif

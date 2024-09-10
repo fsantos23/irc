@@ -6,7 +6,7 @@
 #    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
-#    Updated: 2024/09/09 16:20:30 by pviegas          ###   ########.fr        #
+#    Updated: 2024/09/10 11:56:04 by pviegas          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -71,10 +71,10 @@ fclean: clean
 # Rebuild
 re: fclean all
 
+# Run executable
 run: all
 	@clear
 	./$(NAME) 8090 123
-
 
 # valgrind
 val: fclean all
