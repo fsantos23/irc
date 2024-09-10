@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <string>
 #include "Client.hpp"
-#include "Utils.hpp"
+#include "utils.hpp"
 #include "Channel.hpp"
 
 class Client;
@@ -58,14 +58,16 @@ class Server {
 		void manageChannels(std::vector<Channel> _ch);
 		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
-		void checkQuit(Client cl, std::vector<std::string> str);
 		void sendtoChannel(Channel ch, std::string str);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
+		void checkNick(std::string str, Client *cl);
+		void checkUser(std::vector<std::string> str, Client *cl);
 		
 
 		//commands
+		int checkQuit(Client cl, std::vector<std::string> str);
 		void PRIVMSG(std::vector<std::string> str, Client *cl);
 		void JOIN(std::vector<std::string> cmd, Client *cl);
 		void PART(std::vector<std::string> cmd, Client* cl);

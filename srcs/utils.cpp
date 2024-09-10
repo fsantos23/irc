@@ -1,4 +1,4 @@
-#include "../includes/Utils.hpp"
+#include "../includes/utils.hpp"
 
 void sendColoredMessage(int client_fd, const std::string& message, const std::string& colorCode)
 {

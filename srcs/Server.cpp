@@ -192,7 +192,8 @@ void Server::handleInput(std::vector<std::string> str, int client_fd)
 			break;
 		}
 	}
-	checkQuit(_cl[j], str);
+	if(checkQuit(_cl[j], str))
+		return ;
 	if(checkEntry(str, &_cl[j]))
 		return ;
 	mainCommands(str, &_cl[j]);
@@ -200,7 +201,6 @@ void Server::handleInput(std::vector<std::string> str, int client_fd)
 
 int Server::checkEntry(std::vector<std::string> str, Client *cl)
 {
-	//o user e nick tem de ser diferentes em todos os users
 	std::string entry_array[] = {"USER", "NICK", "PASS"};
     std::vector<std::string> entry(entry_array, entry_array + 3);
 
@@ -209,23 +209,28 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 
     for (int i = 0; i < 3; i++)
     {
-        if (str[0] == entry[i])
-        {
-			if (i == 1)
-                cl->setNick(str[1]);
-            else if (user[i] == "*" && i == 0)
-                cl->setUser(str[1]);
-            else if (i == 2 && str[1] == _password && user[i].empty())
-                cl->setPass(str[1]);
-            else if (i == 2 && str[1] != _password && user[i].empty())
-                return 1;
-            else
-            {
-                sendError(cl->getFd(), cl->getNick(), 462, "You may not reregister");
-                return 1;
-            }
+		if (str[0] == entry[i])
+		{
+			if(str.size() < 2)
+			{
+				std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " " + entry[i] + " :Not enough parameters\r\n";
+				send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
+			}
+			else if (i == 1)
+				checkNick(str[1], cl);
+			else if (user[i] == "*" && i == 0)
+				checkUser(str, cl);
+			else if (i == 2 && str[1] == _password && user[i].empty())
+				cl->setPass(str[1]);
+			else if (i == 2 && str[1] != _password && user[i].empty())
+				return 1;
+			else
+			{
+				sendError(cl->getFd(), cl->getNick(), 462, "You may not reregister");
+				return 1;
+			}
 			return 1;
-        }
+		}
     }
     for (int i = 0; i < 3; i++)
     {
@@ -238,7 +243,32 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
     return 0;
 }
 
+void Server::checkNick(std::string str, Client *cl)
+{
+	for(size_t i = 0; i < _cl.size(); i++)
+	{
+		if(_cl[i].getNick() == str)
+			sendError(cl->getFd(), cl->getNick(), 433, "Nickname is already in use");
+	}
+	cl->setNick(str);
+}
 
+void Server::checkUser(std::vector<std::string> str, Client* cl)
+{
+	if(str.size() < 5)
+	{
+		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " USER :Not enough parameters\r\n";
+		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
+		return ;
+	}
+	if (str[4][0] != ':')
+    {
+        std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " USER :Invalid realname format\r\n";
+		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
+        return ;
+    }
+	cl->setUser(str[1]);
+}
 
 void Server::mainCommands(std::vector<std::string> str, Client *cl)
 {
@@ -256,7 +286,7 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	if(it != commandhandler.end())
 		(this->*(it->second))(str, cl);
 	else
-		send(cl->getFd(), "Command doesn't exist\r\n", 23, 0);
+		sendError(cl->getFd(), cl->getNick(), 421, "Unknown command");
 }
 
 void Server::sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message)
@@ -275,7 +305,7 @@ void Server::sendMessageAll(std::string msg)
 		send(_cl[i].getFd(), msg.c_str(), msg.size(), 0);
 }
 
-void Server::checkQuit(Client cl, std::vector<std::string> str)
+int Server::checkQuit(Client cl, std::vector<std::string> str)
 {
 	if (str[0] == "QUIT") 
 	{
@@ -292,7 +322,9 @@ void Server::checkQuit(Client cl, std::vector<std::string> str)
 		} 
 		else
 			sendMessageAll(cl.getNick() + " has quit (Client disconnected)");
+		return 1;
 	}
+	return 0;
 }
 
 void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
@@ -319,7 +351,7 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 			if (it->first == str[1])
 			{
 				std::string message = sender + str[1] + " " + fullMessage + "\r\n";
-				it->second->broadcast(cl, message);  // it->second is the Channel* object
+				it->second->broadcast(cl, message);
 				recipientFound = true;
 			}
 		}
@@ -341,13 +373,14 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 		sendError(cl->getFd(), cl->getNick(), 401, "No such nick/channel");
 }
 
-
+//the first person to join the channel works properly the others don't
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
     // Check if there are enough parameters for the JOIN command.
     if (cmd.size() < 2)
     {
-        sendError(cl->getFd(), cl->getNick(), 461, "JOIN :Not enough parameters");
+		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " JOIN :Not enough parameters\r\n";
+		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
         return;
     }
 
@@ -360,7 +393,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
         // Ensure the channel name starts with '#'.
         if ((*it)[0] != '#')
         {
-            sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+            sendError(cl->getFd(), cl->getNick(), 403, *it + "No such channel");
             continue;
         }
 
@@ -370,39 +403,47 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
         // Check if the channel is invite-only and if the client is allowed to join.
         if (channel->isInviteOnly() && !channel->isOperator(cl))
         {
-            sendError(cl->getFd(), cl->getNick(), 473, *it + " :Cannot join channel (invite only)");
+            sendError(cl->getFd(), cl->getNick(), 473, *it + "Cannot join channel (invite only)");
             continue;
         }
 
         // Validate the channel key if necessary.
         if (channel->hasKey() && !channel->checkKey(key))
         {
-            sendError(cl->getFd(), cl->getNick(), 475, *it + " :Cannot join channel (incorrect key)");
+            sendError(cl->getFd(), cl->getNick(), 475, *it + "Cannot join channel (incorrect key)");
             continue;
         }
 
         // Check if the client is already in the channel.
         if (!channel->isNewClient(cl->getFd()))
         {
-            sendError(cl->getFd(), cl->getNick(), 443, *it + " :You're already in the channel");
+            sendError(cl->getFd(), cl->getNick(), 443, *it + "You're already in the channel");
             continue;
         }
+
+		if(channel->getLimit() != 0 && channel->getLimit() <= channel->getUsers())
+		{
+			std::string message = ":42_IRC 471 " + cl->getNick() + " " + channel->getChannelName() + " :Cannot join channel (+l)\r\n";
+			sendMessageToClient(cl->getFd(), message);
+			continue ;
+		}
 
         // Add the client to the channel.
         channel->addClient(cl->getFd(), cl);
 
         // 1. Broadcast the JOIN message to the channel.
         std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " JOIN :" + *it + "\r\n";
-		channel->sendMessageChannel(joinMessage);
+		sendMessageToClient(cl->getFd(), joinMessage);
 
-        // 2. Send RPL_NAMREPLY (353) to the client, showing the list of users in the channel.
-        /* std::string nameList = channel->getClientList(); */ // Assuming this function exists and returns the list of users.
-        /* std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
-        sendMessageToClient(cl->getFd(), nameReply); */
+        std::string nameList = channel->getClientList();
+        std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
+        channel->sendMessageChannel(nameReply);
 
-        // 3. Send RPL_ENDOFNAMES (366) to indicate the end of the user list.
         std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
-        sendMessageToClient(cl->getFd(), endOfNamesReply);
+        channel->sendMessageChannel(endOfNamesReply);
+
+		/* channel->incrementUsers(); */
+		std::cout << "number users " << channel->getUsers() << std::endl;
 
         //PFV
         channel->listChannelInfo();
@@ -423,11 +464,12 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	newChannel->addOperator(cl);
 
 	// Send a message to the client informing them that they are the operator
-	std::string message = ":42_IRC 324 " + cl->getNick() + " " + name + " +o\r\n";  // +o gives operator privileges
-    sendMessageToClient(cl->getFd(), message);
-	message = ":42_IRC 331 "  + cl->getNick() + " " + name + " :No topic is set\r\n";
-    sendMessageToClient(cl->getFd(), message);
+	std::string message = ":42_IRC 324 " + cl->getNick() + " " + name + " +o\r\n";
+	sendMessageToClient(cl->getFd(), message);
 
+	message = ":42_IRC 331 "  + cl->getNick() + " " + name + " :No topic is set\r\n";
+	sendMessageToClient(cl->getFd(), message);
+	
 	return (newChannel);
 }
 

@@ -12,6 +12,8 @@ class Channel
 		bool						_inviteOnly;
 		std::map<int, Client *>		_invitedClients;
 		std::string					_key;
+		int 						_limit;
+		int							_users;
 
 	public:
 		Channel(std::string _name);
@@ -30,6 +32,11 @@ class Channel
 		void clearClient(int cl_fd);
 		int countClients();
 		void removeClient(int cl_fd);
+		int getUsers();
+		void incrementUsers();
+		void setLimit(int num);
+		int getLimit();
+		std::string getClientList();
 
 		// Operators management
 		bool isOperator(Client* cl) const;

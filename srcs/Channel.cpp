@@ -1,6 +1,6 @@
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _inviteOnly(false)
+Channel::Channel(std::string name) : _name(name), _inviteOnly(false), _limit(0), _users(0)
 {
 }
 
@@ -30,6 +30,7 @@ bool Channel::isNewClient(int fd)
 void Channel::addClient(int fd, Client* client)
 {
 	_clients[fd] = client;
+	_users++;
 }
 
 void Channel::clearClient(int cl_fd)
@@ -174,7 +175,39 @@ bool Channel::checkKey(const std::string& key)
 void Channel::sendMessageChannel(std::string msg)
 {
 	std::map<int, Client*>::iterator it;
-	for (it = _clients.begin(); it != _clients.end(); ++it)
+	for (it = _clients.begin(); it != _clients.end(); it++)
+	{
+		std::cout << GRE << "it " << it->second->getNick() << WHI << std::endl;
 		sendMessageToClient(it->second->getFd(), msg);
+	}
+}
 
+void Channel::setLimit(int num)
+{
+	_limit = num;
+}
+
+int Channel::getLimit()
+{
+	return _limit;
+}
+
+int Channel::getUsers()
+{
+	return _users;
+}
+
+std::string Channel::getClientList()
+{
+	std::string list = "";
+	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		for(std::map<int, Client*>::iterator it2 = _operators.begin(); it2 != _operators.end(); ++it2)
+		{
+			if(it2->first == it->first)
+				list += "@";
+		}
+		list += it->second->getNick() + " ";
+	}
+	return list;
 }
