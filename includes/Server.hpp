@@ -35,13 +35,19 @@ class Server {
 		int _port;
 		std::string _password;
 		int _sockfd;
-		bool _signal;
 		int _sockcl;
 		std::vector <Client> _cl;
 		std::vector <struct pollfd> _pollfds;
 		std::map<std::string, Channel*>	_channels;
 
+		//PCC
+		fd_set	_readFds;
+		fd_set	_writeFds;
+		std::map<int, Client *>	_clients;
+
 	public:
+		static bool _signal;
+
 		Server(int port, const std::string password);
 		~Server();
 
@@ -58,24 +64,20 @@ class Server {
 		void manageChannels(std::vector<Channel> _ch);
 		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
+		void checkQuit(Client cl, std::vector<std::string> str);
 		void sendtoChannel(Channel ch, std::string str);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
-		void checkNick(std::string str, Client *cl);
-		void checkUser(std::vector<std::string> str, Client *cl);
 		
 
 		//commands
-		int checkQuit(Client cl, std::vector<std::string> str);
 		void PRIVMSG(std::vector<std::string> str, Client *cl);
 		void JOIN(std::vector<std::string> cmd, Client *cl);
 		void PART(std::vector<std::string> cmd, Client* cl);
 		void INVITE(std::vector<std::string> cmd, Client* cl);
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
-		// PFV
-		void LISTINFO(std::vector<std::string> cmd, Client* cl);
 };
 
 #endif
