@@ -43,4 +43,13 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+# Run executable
+run: all
+	@clear
+	./$(NAME) 8090 123
+
+# valgrind
+val: fclean all
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8090 123
+
+.PHONY: all clean fclean re val
