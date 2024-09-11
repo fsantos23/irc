@@ -14,7 +14,7 @@ void Server::initServer()
 {
 	serSocket();
 
-	std::cout << GRE << "Server <" << _port << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Server Running and listening on port " << _port << std::endl << "Waiting for connections..." << WHI << std::endl;
 	_signal = true;
 	while (true)
 	{
@@ -249,9 +249,10 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	commandhandler["INVITE"] = &Server::INVITE;
 	commandhandler["MODE"] = &Server::MODE;
 	commandhandler["KICK"] = &Server::KICK;
+	commandhandler["TOPIC"] = &Server::TOPIC;
 	// PFV
 	commandhandler["LISTINFO"] = &Server::LISTINFO;
-		
+
 	std::map<std::string, CommandHolder>::iterator it = commandhandler.find(str[0]);
 	if(it != commandhandler.end())
 		(this->*(it->second))(str, cl);
@@ -379,7 +380,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		}
 
 		// Validate the channel key if necessary.
-		if (channel->hasKey() && !channel->checkKey(key))
+		if (channel->hasKey() && !channel->checkKey(*key_it))
 		{
 			sendError(cl->getFd(), cl->getNick(), 475, *it + " :Cannot join channel (incorrect key)");
 			continue;
@@ -599,7 +600,18 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 			sendMessageToClient(cl->getFd(), ":ft_irc.42 324 " + key_nick + " NOT FOUND in " + channelName + " :NOT FOUND\r\n");
 		}
 	}
-	// Checks if the mode is "key" protected
+	// Checks if the Topic command is restricted to Operators
+	else if (mode == "+t")
+	{
+		channel->setTopicRestricted(true);
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 324 " + cl->getNick() + " " + channelName + " :Topic change restricted to operators\r\n");
+	}
+	// Checks if the Topic command is NOT restricted to Operators
+	else if (mode == "-t")
+	{
+		channel->setTopicRestricted(false);
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 324 " + cl->getNick() + " " + channelName + " :Anyone can change the topic\r\n");
+	}
 	else
 	{
 		sendMessageToClient(cl->getFd(), ":ft_irc.42 472 " + cl->getNick() + " " + mode + " :Unknown mode\r\n");
@@ -774,4 +786,127 @@ void Server::LISTINFO(std::vector<std::string> cmd, Client* cl)
 		}
 		channel->listChannelInfo();
 	}
+}
+
+/*
+void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
+{
+	if (cmd.size() < 2)
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 461 " + cl->getNick() + " " + cmd[0] + " :Not enough parameters given\r\n");
+		return;
+	}
+
+	std::string channelName = cmd[1];
+	std::string newTopic = (cmd.size() > 2) ? cmd[2] : "";
+
+	if (channelName[0] != '#')
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 403 " + cl->getNick() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
+
+	Channel* channel = getChannel(channelName);
+	if (!channel)
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 403 " + cl->getNick() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
+
+
+	if (!channel->getClientByFd(cl->getFd()))
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 442 " + cl->getNick() + " " + channelName + " :You're not on that channel\r\n");
+		return;
+	}
+
+		// Check if mode +t (only ops can set the topic) is enabled
+	if (channel->isTopicRestricted() && !channel->isOperator(cl))
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 482 " + cl->getNick() + " " + channelName + " :You're not channel operator\r\n");
+		return;
+	}
+
+	// If no new topic is provided, just send the current topic
+	if (newTopic.empty())
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		return;
+	}
+
+	// Define o novo tópico e notifica o canal
+	channel->setTopic(newTopic);
+	sendMessageToClient(cl->getFd(), ":ft_irc.42 332 " + cl->getNick() + " " + channelName + " :Topic changed to '" + newTopic + "'\r\n");
+	channel->broadcast(cl, ":" + cl->getNick() + " TOPIC " + channelName + " :" + newTopic + "\r\n");
+
+	// PFV
+	channel->listChannelInfo();
+}
+*/
+
+void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
+{
+	if (cmd.size() < 2)
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 461 " + cl->getNick() + " " + cmd[0] + " :Not enough parameters given\r\n");
+		return;
+	}
+
+	std::string channelName = cmd[1];
+
+	if (channelName[0] != '#')
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 403 " + cl->getNick() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
+
+	Channel* channel = getChannel(channelName);
+	if (!channel)
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 403 " + cl->getNick() + " " + channelName + " :No such channel\r\n");
+		return;
+	}
+
+	if (!channel->getClientByFd(cl->getFd()))
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 442 " + cl->getNick() + " " + channelName + " :You're not on that channel\r\n");
+		return;
+	}
+
+	// Check if mode +t (only ops can set the topic) is enabled
+	if (channel->isTopicRestricted() && !channel->isOperator(cl))
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 482 " + cl->getNick() + " " + channelName + " :You're not channel operator\r\n");
+		return;
+	}
+
+	if (cmd.size() == 2)
+	{
+		sendMessageToClient(cl->getFd(), ":ft_irc.42 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		return;
+	}
+
+	std::string newTopic;
+	if (cmd[2][0] == ':')
+	{
+		for (size_t i = 2; i < cmd.size(); ++i)
+		{
+			newTopic += cmd[i];
+			if (i != cmd.size() - 1)
+				newTopic += " ";
+		}
+		// Removes : from the beggining
+		newTopic.erase(0, 1);
+	}
+	else
+	{
+		newTopic = cmd[2];
+	}
+
+	channel->setTopic(newTopic);
+	sendMessageToClient(cl->getFd(), ":ft_irc.42 332 " + cl->getNick() + " " + channelName + " :Topic changed to '" + newTopic + "'\r\n");
+	channel->broadcast(cl, ":" + cl->getNick() + " TOPIC " + channelName + " :" + newTopic + "\r\n");
+
+	// PFV
+	channel->listChannelInfo();
 }

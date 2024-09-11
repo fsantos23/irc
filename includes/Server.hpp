@@ -30,7 +30,8 @@
 class Client;
 class Channel;
 
-class Server {
+class Server
+{
 	private:
 		int _port;
 		std::string _password;
@@ -72,6 +73,7 @@ class Server {
 		void INVITE(std::vector<std::string> cmd, Client* cl);
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
+		void TOPIC(std::vector<std::string> cmd, Client* cl);
 		// PFV
 		void LISTINFO(std::vector<std::string> cmd, Client* cl);
 };

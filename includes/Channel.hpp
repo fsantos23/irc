@@ -12,6 +12,8 @@ class Channel
 		bool						_inviteOnly;
 		std::map<int, Client *>		_invitedClients;
 		std::string					_key;
+		std::string					_topic;
+		bool						_topicRestricted;
 
 	public:
 		Channel(std::string _name);
@@ -23,6 +25,10 @@ class Channel
 		void setInviteOnly(bool value);
 		bool isInviteOnly() const;
 		void setMode(std::string mode, bool enable);
+		void setTopic(const std::string& topic);
+		std::string getTopic() const;
+		void setTopicRestricted(bool value);
+		bool isTopicRestricted() const;
 
 		// Client management
 		bool isNewClient(int fd);

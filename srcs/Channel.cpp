@@ -85,6 +85,9 @@ void Channel::listChannelInfo() const
 {
 	std::cout << std::endl << "Channel Name: " << _name << std::endl;
 
+	std::cout << "Channel Topic: " << (isTopicRestricted() ? "+t (operators only)" : "-t (all)") << std::endl;
+	std::cout << "Channel Topic: " << _topic << std::endl;
+
 	std::cout << "Channel Mode: " << (isInviteOnly() ? "+i (invite-only)" : "-i (open)") << std::endl;
 
 	std::cout << "Channel Protected: " << (hasKey() ? "+k (Protected)" : "-k (Unprotected)") << std::endl;
@@ -225,6 +228,8 @@ bool Channel::hasKey() const
 
 bool Channel::checkKey(const std::string& key)
 {
+	std::cout << std::endl << "Checking key: " << key << std::endl;
+	std::cout << "Stored key: " << _key << std::endl << std::endl;
 	return (_key == key);
 }
 
@@ -234,4 +239,22 @@ void Channel::sendMessageChannel(std::string msg)
 	for (it = _clients.begin(); it != _clients.end(); ++it)
 		sendMessageToClient(it->second->getFd(), msg);
 
+}
+
+void Channel::setTopic(const std::string& topic)
+{
+	_topic = topic;
+}
+
+std::string Channel::getTopic() const
+{
+	return (_topic);
+}
+void Channel::setTopicRestricted(bool value)
+{
+	_topicRestricted = value;
+}
+bool Channel::isTopicRestricted() const
+{
+	return (_topicRestricted);
 }
