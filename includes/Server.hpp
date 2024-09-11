@@ -69,6 +69,10 @@ class Server {
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
+
+		void closeChannels();
+		void closeClients();
+		bool hasMessage();
 		
 
 		//commands

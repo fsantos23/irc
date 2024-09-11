@@ -50,6 +50,6 @@ run: fclean all
 
 # valgrind
 val: fclean all
-	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8090 123
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8080 123
 
 .PHONY: all clean fclean re

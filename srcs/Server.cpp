@@ -1,10 +1,10 @@
 #include "../includes/Server.hpp"
+#include <sys/select.h>
 
 bool Server::_signal = false;
 
 Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _sockcl(0)
 {
-	this->_signal = false;
 	this->_sockfd = 0;
 
 	FD_ZERO(&this->_readFds);
@@ -33,8 +33,16 @@ void Server::initServer()
 	std::cout << GRE << "Waiting for clients..." << WHI << std::endl;
 	signal(SIGINT, handleSignal);
 	signal(SIGQUIT, handleSignal);
-	while(_signal == false)
+	while(true)
 	{
+		if (_signal == true)
+		{
+			closeClients();
+			closeChannels();
+			closeFds();
+			break;
+		}
+
 		//set zero to the file descriptors
 		FD_ZERO(&cpReadFds);
 		FD_ZERO(&cpWriteFds);
@@ -53,12 +61,7 @@ void Server::initServer()
 		timeout.tv_usec = 1000;
 
 		if((selectFds = select(max_sockfd + 1, &cpReadFds, &cpWriteFds, NULL, &timeout)) < 0)
-		{
 			std::cout << "Failed to select file descriptors" << std::endl;
-			/* if (_signal== true)
-				break;  */
-			continue;
-		}
 		else if(selectFds == 0)
 			continue;
 		
@@ -101,7 +104,12 @@ void Server::initServer()
 				if (clientIt != this->_clients.end())
 				{
 					Client *client = clientIt->second;
-					write(client->getFd(), "Hello", 5);
+					if (client->hasMessage())
+					{
+						std::cout << YEL << "Sending message to client" << WHI << std::endl;
+						std::string message = client->getMessage();
+						send(fd, message.c_str(), message.length(), 0);
+					}
 				}
 			}
 		}
@@ -110,26 +118,21 @@ void Server::initServer()
 	closeFds();
 }
 
+
+
 void Server::serSocket()
 {
-
 	struct sockaddr_in	serverAddr;
 
 	_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_sockfd < 0)
-	{
-		std::cout << RED;
 		throw(std::runtime_error("Failed To Open Socket"));
-		std::cout << WHI;
-	}
+
 	int opt = 1;
+
 	// Set SO_REUSEADDR option to allow reuse of local addresses
 	if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-	{
-		std::cout << RED;
 		throw(std::runtime_error("Failed To Set Socket To Be Reusable"));
-		std::cout << WHI;
-	}
 
 	memset(&serverAddr, 0, sizeof(serverAddr));
 
@@ -141,26 +144,15 @@ void Server::serSocket()
 	
 	// Set O_NONBLOCK flag to enable nonblocking I/O
 	if (fcntl(_sockfd, F_SETFL, O_NONBLOCK) < 0)
-	{
-		std::cout << RED;
 		throw std::runtime_error("Failed To Set Socket To Non-Blocking");
-		std::cout << WHI;
-	}
 
 	// Bind the listening socket to the port configured
 	if(bind(_sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-	{
-		std::cout << RED;
 		throw(std::runtime_error("Failed To Bind Socket To Port"));
-		std::cout << WHI;
-	}
 
 	if(listen(_sockfd, SOMAXCONN) < 0)
-	{
-		std::cout << RED;
 		throw(std::runtime_error("Failed To Mark Socket As Passive"));
-		std::cout << WHI;
-	}
+
 	std::cout << GRE << "Server started on port " << _port << WHI << std::endl;
 	std::cout << GRE << "socket: " << _sockfd << WHI << std::endl;
 
@@ -177,9 +169,23 @@ void Server::closeFds()
 			close(_cl[i].getFd());
 	}
 }
+void Server::closeChannels()
+{
+	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete it->second; // Libere a memória alocada para o canal
+	_channels.clear(); // Limpe o mapa de canais
+	
+}
+void Server::closeClients()
+{
+	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end(); ++it)
+		close(it->getFd());
+	_cl.clear();
+}
+
 void Server::handleSignal(int sig)
 {
-	if(sig == SIGINT)
+	if(sig == SIGINT || sig == SIGQUIT)
 	{
 		_signal = true;
 		std::cout << "Signal received: " << std::endl;
@@ -192,7 +198,10 @@ void Server::clearClient(int fd)
 	{	
 		if (it->getFd() == fd)
 		{
+			
+			close(fd);
 			_cl.erase(it);
+			FD_CLR(fd, &_readFds);
 			break;
 		}
 	}
@@ -215,6 +224,7 @@ void Server::handleClientMessage(int clientFd)
 	{
 		std::cout << RED << "Client disconnected." << std::endl;
 		clearClient(clientFd);
+
 		return;
 	}
 

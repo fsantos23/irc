@@ -13,6 +13,9 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <string>
+#include <queue>
+
 
 class Client {
 	private:
@@ -21,10 +24,12 @@ class Client {
 		std::string _nickname;
 		std::string _user;
 		std::string _pass;
+		std::queue<std::string> _messages; // Supondo que as mensagens são armazenadas em uma fila
+
 
 	public:
 		Client();
-		int getFd();
+		int getFd() const;
 		void setFd(int fd);
 		void setIp(std::string ip);
 		std::string getIp() {return _ip;};
@@ -34,6 +39,9 @@ class Client {
 		void setNick(std::string str) {_nickname = str;};
 		void setUser(std::string str) {_user = str;}
 		void setPass(std::string str) {_pass = str;}
+
+		bool hasMessage() const;
+		std::string getMessage();
 };
 
 #endif
