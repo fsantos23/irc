@@ -6,13 +6,13 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:50:38 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 11:18:55 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _inviteOnly(false)
+Channel::Channel(std::string _name) : _name(_name), _inviteOnly(false), _topicRestricted(false), _userLimit(0)
 {
 }
 
@@ -119,6 +119,11 @@ void Channel::listChannelInfo() const
 		std::cout << std::endl;
 	}
 
+	if (_userLimit > 0)
+		std::cout << "User Limit: " << _userLimit << std::endl;
+	else
+		std::cout << "User Limit: No limit" << std::endl;
+	
 	std::cout << "Connected Clients (socket IDs): ";
 	if (_clients.empty())
 		std::cout << "No clients connected." << std::endl;
@@ -269,4 +274,19 @@ void Channel::setTopicRestricted(bool value)
 bool Channel::isTopicRestricted() const
 {
 	return (_topicRestricted);
+}
+
+void Channel::setUserLimit(int limit)
+{
+	_userLimit = limit;
+}
+
+int Channel::getUserLimit() const
+{
+	return (_userLimit);
+}
+
+bool Channel::hasUserLimit() const
+{
+	return (_userLimit) > 0;
 }

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:52:08 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 11:08:14 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class Channel
 		std::string					_key;
 		std::string					_topic;
 		bool						_topicRestricted;
+		int							_userLimit;
 
 	public:
 		Channel(std::string _name);
@@ -69,6 +70,11 @@ class Channel
 		void removeKey();
 		bool hasKey() const;
 		bool checkKey(const std::string& key);
+
+		// User limit management
+		void setUserLimit(int limit);
+		int getUserLimit() const;
+		bool hasUserLimit() const;
 
 		// Utils
 		void broadcast(Client* self, const std::string &msg);
