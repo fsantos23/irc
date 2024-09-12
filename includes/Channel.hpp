@@ -37,24 +37,19 @@ class Channel
 		void setLimit(int num);
 		int getLimit();
 		std::string getClientList();
-		std::map<int, Client*> getClient() const;
-		Client* getClientByFd(int fd) const;
-		Client* getClientByName(const std::string& nick) const;
 
 		// Operators management
 		bool isOperator(Client* cl) const;
-		void addOperator(int fd, Client* client);
+		void addOperator(Client* cl);
 		int countOperators();
 		void forceOperator();
-		void removeOperator(int fd);
 
 		// Invite management
 		void inviteClient(Client* cl);
-		bool isInvited(Client* cl) const;
+		bool isInvited(Client* cl);
 
 		// Key management
 		void setKey(const std::string& key);
-		std::string getKey() const;
 		void removeKey();
 		bool hasKey() const;
 		bool checkKey(const std::string& key);
