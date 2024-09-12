@@ -1,33 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Client.cpp                                         :+:      :+:    :+:   */
+/*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/09/12 10:50:30 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:50:32 by pviegas          ###   ########.fr       */
+/*   Created: 2024/09/12 10:53:54 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/12 10:53:56 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/Client.hpp"
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
-Client::Client(void) : _fd(-1), _ip(""), _nickname("*"), _user("*"), _pass("")
-{
-	std::cout << "Client created" << std::endl;
-}
+#include <string>
+#include "Server.hpp"
+#include <sys/socket.h>
 
-int Client::getFd( void )
-{
-	return _fd;
-}
+void	sendColoredMessage(int client_fd, const std::string& message, const std::string& colorCode);
+void	print_tokens(std::vector<std::string> str);
+void	sendMessageToClient(int client_fd, const std::string& message);
+std::vector<std::string>	split(std::string str, std::string delimiter);
 
-void Client::setFd( int fd )
-{
-	_fd = fd;
-}
-
-void Client::setIp( std::string ip )
-{
-	_ip = ip;
-}
+#endif

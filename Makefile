@@ -1,4 +1,16 @@
-SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp ./srcs/utils.cpp ./srcs/Channel.cpp
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
+#    Updated: 2024/09/12 12:22:50 by pviegas          ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp ./srcs/Utils.cpp ./srcs/Channel.cpp
 
 OBJS		= $(SRCS:.cpp=.o)
 
@@ -43,4 +55,13 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+# Run executable
+run: all
+	@clear
+	./$(NAME) 8090 123
+
+# valgrind
+val: fclean all
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8090 123
+
+.PHONY: all clean fclean re run val

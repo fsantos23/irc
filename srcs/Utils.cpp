@@ -1,4 +1,16 @@
-#include "../includes/utils.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Utils.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:50:53 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/12 11:52:45 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/Utils.hpp"
 
 void sendColoredMessage(int client_fd, const std::string& message, const std::string& colorCode)
 {
@@ -28,7 +40,6 @@ void sendMessageToClient(int client_fd, const std::string& message)
 
 std::vector<std::string>	split(std::string str, std::string delimiter)
 {
-	std::cout << GRE << str << WHI << std::endl;
 	std::vector<std::string> tokens;
 	size_t pos = 0;
 
@@ -59,9 +70,6 @@ std::vector<std::string>	split(std::string str, std::string delimiter)
 			str.clear();
 		}
 	}
-	
-	// PFV
-	print_tokens(tokens);
-	
+
 	return (tokens);
 }

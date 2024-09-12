@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/12 12:11:45 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/Channel.hpp"
 
-Channel::Channel(std::string name) : _name(name), _inviteOnly(false), _limit(0), _users(0)
+Channel::Channel(std::string _name) : _name(_name), _inviteOnly(false), _topicRestricted(false), _userLimit(0)
 {
 }
 
@@ -32,7 +44,6 @@ void Channel::addClient(int fd, Client* client)
 {
 	_clients[fd] = client;
 	std::cout << "client joined: " << client->getNick() << std::endl;
-	_users++;
 }
 
 void Channel::clearClient(int cl_fd)
@@ -58,10 +69,36 @@ void Channel::broadcast(Client* self, const std::string &msg)
 
 void Channel::listChannelInfo() const
 {
+	std::cout << std::endl << "     ***** Channel Details *****" << std::endl;
 	std::cout << "Channel Name: " << _name << std::endl;
+
+	std::cout << "Channel Topic Restricted: " << (isTopicRestricted() ? "+t (operators only)" : "-t (all)") << std::endl;
+	std::cout << "Channel Topic: " << _topic << std::endl;
 
 	std::cout << "Channel Mode: " << (isInviteOnly() ? "+i (invite-only)" : "-i (open)") << std::endl;
 
+	std::cout << "Channel Protected: " << (hasKey() ? "+k (Protected)" : "-k (Unprotected)") << std::endl;
+
+	std::cout << "Invited Clients (socket IDs): ";
+	if (_invitedClients.empty())
+		std::cout << "No invited clients." << std::endl;
+	else
+	{
+		for (std::map<int, Client*>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
+		{
+			if (isOperator(it->second))
+				std::cout << "@" << it->first << " ";
+			else
+				std::cout << it->first << " ";
+		}
+		std::cout << std::endl;
+	}
+
+	if (_userLimit > 0)
+		std::cout << "User Limit: " << _userLimit << std::endl;
+	else
+		std::cout << "User Limit: No limit" << std::endl;
+	
 	std::cout << "Connected Clients (socket IDs): ";
 	if (_clients.empty())
 		std::cout << "No clients connected." << std::endl;
@@ -96,21 +133,6 @@ bool Channel::isOperator(Client* cl) const
 void Channel::addOperator(Client* cl)
 {
 	_operators[cl->getFd()] = cl;
-}
-
-void Channel::setMode(std::string mode, bool enable)
-{
-	// If (invite-only
-	if (mode == "i")
-	{
-		setInviteOnly(enable);
-		if (enable)
-			std::cout << "Channel mode set to invite-only" << std::endl;
-		else
-			std::cout << "Invite-only mode disabled" << std::endl;
-	}
-	// PFV
-	// Outros modos podem ser adicionados aqui no futuro
 }
 
 int Channel::countOperators()
@@ -171,6 +193,8 @@ bool Channel::hasKey() const
 
 bool Channel::checkKey(const std::string& key)
 {
+	std::cout << std::endl << "Checking key: " << key << std::endl;
+	std::cout << "Stored key: " << _key << std::endl << std::endl;
 	return (_key == key);
 }
 
@@ -182,21 +206,6 @@ void Channel::sendMessageChannel(std::string msg)
 		std::cout << "nick: " << it->second->getNick() << std::endl;
 		sendMessageToClient(it->first, msg);
 	}
-}
-
-void Channel::setLimit(int num)
-{
-	_limit = num;
-}
-
-int Channel::getLimit()
-{
-	return _limit;
-}
-
-int Channel::getUsers()
-{
-	return _users;
 }
 
 std::string Channel::getClientList()
@@ -212,4 +221,69 @@ std::string Channel::getClientList()
 		list += it->second->getNick() + " ";
 	}
 	return list;
+}
+
+void Channel::setTopic(const std::string& topic)
+{
+	_topic = topic;
+}
+
+std::string Channel::getTopic() const
+{
+	return (_topic);
+}
+void Channel::setTopicRestricted(bool value)
+{
+	_topicRestricted = value;
+}
+bool Channel::isTopicRestricted() const
+{
+	return (_topicRestricted);
+}
+
+void Channel::setUserLimit(int limit)
+{
+	_userLimit = limit;
+}
+
+int Channel::getUserLimit() const
+{
+	return (_userLimit);
+}
+
+bool Channel::hasUserLimit() const
+{
+	return (_userLimit) > 0;
+}
+
+Client* Channel::getClientByName(const std::string& nick) const
+{
+	std::map<int, Client*>::const_iterator it;
+	for (it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		Client* client = it->second;
+		if (client->getNick() == nick)
+		{
+			return (client);
+		}
+	}
+	return (NULL);
+}
+
+void Channel::removeOperator(int cl_fd)
+{
+	std::map<int, Client*>::iterator it = _operators.find(cl_fd);
+
+	if (it != _operators.end())
+		_operators.erase(it);
+}
+
+Client* Channel::getClientByFd(int fd) const
+{
+	std::map<int, Client*>::const_iterator it = _clients.find(fd);
+	if (it != _clients.end())
+	{
+		return (it->second);
+	}
+	return (NULL);
 }

@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/12 12:27:13 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
@@ -8,29 +20,16 @@
 #define YEL "\e[1;33m"
 //-----------------------------------------------//
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <iostream>
-#include <signal.h>
-#include <stdlib.h>
-#include <map>
-#include <vector>
 #include <poll.h>
-#include <algorithm>
-#include <string>
 #include "Client.hpp"
-#include "utils.hpp"
+#include "Utils.hpp"
 #include "Channel.hpp"
 
 class Client;
 class Channel;
 
-class Server {
+class Server
+{
 	private:
 		int _port;
 		std::string _password;
@@ -74,6 +73,10 @@ class Server {
 		void INVITE(std::vector<std::string> cmd, Client* cl);
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
+		void TOPIC(std::vector<std::string> cmd, Client* cl);
+		
+		// for debugging
+		void LISTINFO(std::vector<std::string> cmd, Client* cl);
 };
 
 #endif
