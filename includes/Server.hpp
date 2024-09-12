@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:27:13 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 14:59:40 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,15 +54,16 @@ class Server
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
 		void mainCommands(std::vector<std::string> str, Client *cl);
-		void manageChannels(std::vector<Channel> _ch);
+//		void manageChannels(std::vector<Channel> _ch);
 		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
 		void checkQuit(Client cl, std::vector<std::string> str);
-		void sendtoChannel(Channel ch, std::string str);
+//		void sendtoChannel(Channel ch, std::string str);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
 		
+		bool isNickInUse(const std::string& nick) const;
 
 		// IRC commands
 		void PRIVMSG(std::vector<std::string> str, Client *cl);

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:14:02 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 15:33:04 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,6 +225,11 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 		{
 			if (i == 1)
 			{
+				if (isNickInUse(str[1]))
+				{
+					sendError(cl->getFd(), cl->getNick(), 433, str[1] + " :Nickname is already in use");
+					return (1);
+				}
 				cl->setNick(str[1]);
 				std::cout << cl->getFd() << " change their Nick to " << cl->getNick() << std::endl;
 			}
@@ -248,7 +253,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 			return (1);
 		}
 	}
-    for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
     {
         if (user[i] == "*" || user[i].empty())
         {
@@ -956,4 +961,17 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 
 	// PFV
 	channel->listChannelInfo();
+}
+
+bool Server::isNickInUse(const std::string& nick) const
+{
+	std::string lowerNick = toLowerCase(nick);
+	for (std::vector<Client>::const_iterator it = _cl.begin(); it != _cl.end(); ++it)
+	{
+		if (toLowerCase(it->getNick()) == lowerNick)
+		{
+		return (true);
+		}
+	}
+	return (false);
 }

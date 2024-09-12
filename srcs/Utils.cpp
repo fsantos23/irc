@@ -6,17 +6,11 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:53 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 11:52:45 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 14:50:53 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Utils.hpp"
-
-void sendColoredMessage(int client_fd, const std::string& message, const std::string& colorCode)
-{
-    std::string coloredMessage = colorCode + message + "\033[0m";
-    send(client_fd, coloredMessage.c_str(), coloredMessage.length(), 0);
-}
 
 void print_tokens(std::vector<std::string> str)
 {
@@ -72,4 +66,11 @@ std::vector<std::string>	split(std::string str, std::string delimiter)
 	}
 
 	return (tokens);
+}
+
+std::string toLowerCase(const std::string& str)
+{
+	std::string lowerStr = str;
+	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+	return lowerStr;
 }
