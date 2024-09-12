@@ -232,12 +232,12 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 			}
 			else if (i == 1)
 			{
-				cl->setNick(str[1]);
+				checkNick(str[1], cl);
 				std::cout << cl->getFd() << " change their Nick to " << cl->getNick() << std::endl;
 			}
 			else if (user[i] == "*" && i == 0)
 			{
-				cl->setUser(str[1]);
+				checkUser(str, cl);
 				std::cout << cl->getFd() << " change their User to " << cl->getUser() << std::endl;
 			}
 			else if (i == 2 && str[1] == _password && user[i].empty())
@@ -462,19 +462,19 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		}
 		
 		// Add the client to the channel.
-		channel->addClient(cl->getFd(), cl);
+		channel->addClient(cl);
 		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
 
 		// 1. Broadcast the JOIN message to the channel.
 		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " JOIN :" + *it + "\r\n";
 		channel->sendMessageChannel(joinMessage);
 
-        /* std::string nameList = channel->getClientList();
+        std::string nameList = channel->getClientList();
         std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
         sendMessageToClient(cl->getFd(), nameReply);
 
         std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
-        sendMessageToClient(cl->getFd(), endOfNamesReply); */
+        sendMessageToClient(cl->getFd(), endOfNamesReply);
 
 		if (key_it != keypass.end())
 			++key_it;
@@ -499,11 +499,11 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
 
 	// Send a message to the client informing them that they are the operator
-	/* std::string message = ":42_IRC 324 " + cl->getNick() + " " + name + " +o\r\n";
+	std::string message = ":42_IRC 324 " + cl->getNick() + " " + name + " +o\r\n";
 	sendMessageToClient(cl->getFd(), message);
 
 	message = ":42_IRC 331 "  + cl->getNick() + " " + name + " :No topic is set\r\n";
-	sendMessageToClient(cl->getFd(), message); */
+	sendMessageToClient(cl->getFd(), message);
 	
 	return (newChannel);
 }
@@ -585,8 +585,16 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 		{
 			if(it->first == cmd[1])
 			{
-				std::string msg = ":42_IRC MODE" + cmd[1];
-
+				std::string msg = ":42_IRC MODE " + cmd[1] + " ";
+				if(it->second->getUserLimit())
+					msg += "+l ";
+				if(!it->second->getKey().empty())
+					msg += "+k ";
+				if(!it->second->getTopic().empty())
+					msg += "+t";
+				msg += "\r\n";
+				send(cl->getFd(), msg.c_str(), msg.length(), 0);
+				return ;
 			}
 		}
 	}

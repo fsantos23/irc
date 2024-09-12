@@ -19,8 +19,8 @@ class Channel
 {
 	private:
 		std::string					_name;
-		std::map<int, Client *>		_clients;
-		std::map<int, Client *>		_operators;
+		std::vector<Client*>		_clients;
+		std::vector<Client *>			_operators;
 		bool						_inviteOnly;
 		std::map<int, Client *>		_invitedClients;
 		std::string					_key;
@@ -46,7 +46,7 @@ class Channel
 
 		// Client management
 		bool isNewClient(int fd);
-		void addClient(int fd, Client* client);
+		void addClient(Client* client);
 		void clearClient(int cl_fd);
 		int countClients();
 		void removeClient(int cl_fd);
@@ -70,6 +70,7 @@ class Channel
 		void removeKey();
 		bool hasKey() const;
 		bool checkKey(const std::string& key);
+		std::string getKey() {return _key;};
 
 		// User limit management
 		void setUserLimit(int limit);
