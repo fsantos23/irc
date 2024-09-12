@@ -6,12 +6,11 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:50:22 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 12:23:38 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
 
 int main(int ac, char **av)
 {

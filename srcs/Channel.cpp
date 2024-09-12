@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 11:18:55 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 12:11:45 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,9 +95,10 @@ void Channel::broadcast(Client* self, const std::string &msg)
 
 void Channel::listChannelInfo() const
 {
-	std::cout << std::endl << "Channel Name: " << _name << std::endl;
+	std::cout << std::endl << "     ***** Channel Details *****" << std::endl;
+	std::cout << "Channel Name: " << _name << std::endl;
 
-	std::cout << "Channel Topic: " << (isTopicRestricted() ? "+t (operators only)" : "-t (all)") << std::endl;
+	std::cout << "Channel Topic Restricted: " << (isTopicRestricted() ? "+t (operators only)" : "-t (all)") << std::endl;
 	std::cout << "Channel Topic: " << _topic << std::endl;
 
 	std::cout << "Channel Mode: " << (isInviteOnly() ? "+i (invite-only)" : "-i (open)") << std::endl;
@@ -165,8 +166,8 @@ void Channel::addOperator(int fd, Client* client)
 	_operators[fd] = client;
 }
 
-
-
+// PFV
+/*
 void Channel::setMode(std::string mode, bool enable)
 {
 	// If (invite-only) mode is being set
@@ -181,6 +182,7 @@ void Channel::setMode(std::string mode, bool enable)
 	// PFV
 	// Outros modos podem ser adicionados aqui no futuro
 }
+*/
 
 int Channel::countOperators()
 {

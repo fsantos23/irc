@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 11:08:14 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 12:09:13 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@ class Channel
 		void createChannel(Client *cl);
 		void setInviteOnly(bool value);
 		bool isInviteOnly() const;
+		// PFV
 		void setMode(std::string mode, bool enable);
 		void setTopic(const std::string& topic);
 		std::string getTopic() const;

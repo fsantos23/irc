@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:52:33 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/12 12:27:13 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,21 +20,7 @@
 #define YEL "\e[1;33m"
 //-----------------------------------------------//
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <iostream>
-#include <signal.h>
-#include <stdlib.h>
-#include <map>
-#include <vector>
 #include <poll.h>
-#include <algorithm>
-#include <string>
 #include "Client.hpp"
 #include "Utils.hpp"
 #include "Channel.hpp"
@@ -78,7 +64,7 @@ class Server
 		Channel* getChannel(const std::string& name);
 		
 
-		//commands
+		// IRC commands
 		void PRIVMSG(std::vector<std::string> str, Client *cl);
 		void JOIN(std::vector<std::string> cmd, Client *cl);
 		void PART(std::vector<std::string> cmd, Client* cl);
@@ -86,7 +72,8 @@ class Server
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
 		void TOPIC(std::vector<std::string> cmd, Client* cl);
-		// PFV
+		
+		// for debugging
 		void LISTINFO(std::vector<std::string> cmd, Client* cl);
 };
 
