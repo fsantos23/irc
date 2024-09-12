@@ -50,24 +50,23 @@ class Channel
 		void clearClient(int cl_fd);
 		int countClients();
 		void removeClient(int cl_fd);
-		std::map<int, Client*> getClient() const;
-		Client* getClientByFd(int fd) const;
+		std::string getClientList();
 		Client* getClientByName(const std::string& nick) const;
+		Client* getClientByFd(int fd) const;
 
 		// Operators management
 		bool isOperator(Client* cl) const;
-		void addOperator(int fd, Client* client);
+		void addOperator(Client* cl);
 		int countOperators();
 		void forceOperator();
-		void removeOperator(int fd);
+		void removeOperator(int cl_fd);
 
 		// Invite management
 		void inviteClient(Client* cl);
-		bool isInvited(Client* cl) const;
+		bool isInvited(Client* cl);
 
 		// Key management
 		void setKey(const std::string& key);
-		std::string getKey() const;
 		void removeKey();
 		bool hasKey() const;
 		bool checkKey(const std::string& key);

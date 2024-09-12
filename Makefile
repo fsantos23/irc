@@ -10,65 +10,49 @@
 #                                                                              #
 # **************************************************************************** #
 
-# Color variables
-BLACK   = \033[1;30m
-RED		= \033[1;31m
-GREEN	= \033[1;32m
-YELLOW	= \033[1;33m
-BLUE	= \033[1;34m
-PURPLE  = \033[1;35m
-CYAN    = \033[1;36m
-WHITE	= \033[1;37m
-RESET 	= \033[0m
+SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp ./srcs/Utils.cpp ./srcs/Channel.cpp
 
-# Executable name
-NAME = ircserv
+OBJS		= $(SRCS:.cpp=.o)
 
-# Compiler options
-CXX			= c++
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 #-fsanitize=address -g3
-INCLUDES	= -I ./include
+NAME		=	ircserv
 
-# Paths
-SRC_DIR = srcs/
-OBJ_DIR = objs/
+CPP			=	c++
 
-# Files
-SRC_FILES =	ircserv.cpp \
-			Server.cpp \
-			Client.cpp \
-			Channel.cpp \
-			Utils.cpp
+CPPFLAGS		=	-Wall -Wextra -Werror -std=c++98 -g #-fsanitize=address
 
-OBJS = $(addprefix $(OBJ_DIR), $(SRC_FILES:.cpp=.o))
+RM			=	rm -rf
 
-# Compile object files
-$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
-	@clear
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDES)
+INC			=	-Iincludes -I/usr/include
 
-# Default target
+# /* ~~~~~~~ Colors ~~~~~~~ */
+BLACK:="\033[1;30m"
+RED:="\033[1;31m"
+GREEN:="\033[1;32m"
+PURPLE:="\033[1;35m"
+CYAN:="\033[1;36m"
+WHITE:="\033[1;37m"
+EOC:="\033[0;0m"
+
+
 all: $(NAME)
 
-# Link executable
-${NAME}: $(OBJS)
-	@echo "\n$(BLUE) [Compiling] $(NAME)$(RESET)\n"
-	@$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
-	@echo "$(GREEN) [Success] $(NAME) created.$(RESET)\n\n"
+%.o: %.cpp
+	$(CPP) $(CPPFLAGS) $(INC) -c $< -o $@
 
-# Clean object files
+$(NAME): $(OBJS)
+	$(CPP) $(OBJS) $(CPPFLAGS) $(INC) -o $(NAME)
+	@echo $(GREEN) "[Ex compiled!]" $(EOC)
+
 clean:
-	@clear
-	@rm -rf $(OBJS)
-	@echo "\n$(RED) [Deleting] .o files ... (deleted)$(RESET)\n\n"
+	@echo $(PURPLE) "[🧹Cleaning...🧹]" $(EOC)
+	$(RM) $(OBJS)
 
-# Clean all files
 fclean: clean
-	@rm -rf $(NAME)
-	@echo "$(GREEN) [Success] $(NAME) files ... (deleted)$(RESET)\n\n"
+	@echo $(PURPLE) "[🧹FCleaning...🧹]" $(EOC)
+	$(RM) $(NAME)
+	$(RM) *.out
+	@echo $(GREEN) "[All cleaned!]" $(EOC)
 
-# Rebuild
 re: fclean all
 
 # Run executable
