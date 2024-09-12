@@ -6,7 +6,7 @@
 #    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
-#    Updated: 2024/09/10 11:56:04 by pviegas          ###   ########.fr        #
+#    Updated: 2024/09/12 10:52:59 by pviegas          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,4 +80,4 @@ run: all
 val: fclean all
 	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8090 123
 
-.PHONY: all clean fclean re val
+.PHONY: all clean fclean re run val

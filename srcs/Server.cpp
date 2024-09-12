@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/12 10:50:48 by pviegas          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/Server.hpp"
 
 Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _signal(false), _sockcl(0)
