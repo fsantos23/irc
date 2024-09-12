@@ -6,7 +6,7 @@
 /*   By: pveiga-c <pveiga-c@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 17:25:28 by pveiga-c         ###   ########.fr       */
+/*   Updated: 2024/09/12 17:37:50 by pveiga-c         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,15 +39,14 @@ int main(int argc, char **argv)
 
 	if (invalid_arguments(argc, argv))
 		return (-1);
-
 	try
 	{
-		Server server = Server(atoi(argv[1]), std::string(argv[2]));
+		Server server(atoi(argv[1]), std::string(argv[2]));
 		server.initServer();
 	}
 	catch(std::exception &e) {
 		std::cerr << e.what() << std::endl;
-		exit(-1);
+		return (-1);
 	}
 
 	return (0);
