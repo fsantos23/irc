@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:17 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 15:03:33 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/13 11:27:45 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <map>
 #include <sstream>
-#include <vector>
 
 class Client {
 	private:

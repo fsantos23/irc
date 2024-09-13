@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:53 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 14:50:53 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/13 10:16:47 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,5 +72,5 @@ std::string toLowerCase(const std::string& str)
 {
 	std::string lowerStr = str;
 	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
-	return lowerStr;
+	return (lowerStr);
 }
