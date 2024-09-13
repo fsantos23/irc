@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 12:11:08 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/13 16:47:44 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ class Channel
 		// Client management
 		bool isNewClient(int fd);
 		void addClient(int fd, Client* client);
-		void clearClient(int cl_fd);
+		void removeClientOperator(int cl_fd);
 		int countClients();
 		void removeClient(int cl_fd);
 		std::string getClientList();

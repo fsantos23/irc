@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 11:53:35 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/13 17:30:12 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,13 +32,13 @@ class Channel;
 class Server
 {
 	private:
-		int _port;
-		std::string _password;
-		int _sockfd;
-		bool _signal;
-		int _sockcl;
-		std::vector <Client> _cl;
-		std::vector <struct pollfd> _pollfds;
+		int 							_port;
+		std::string						_password;
+		int								_sockfd;
+		static bool						_signal;
+		int								_sockcl;
+		std::vector <Client>			_cl;
+		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
 
 	public:

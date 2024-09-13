@@ -6,13 +6,13 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 12:49:53 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/13 17:47:03 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/Server.hpp"
 
-Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _signal(false), _sockcl(0)
+Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _sockcl(0)
 {
 
 }
@@ -22,13 +22,15 @@ Server::~Server()
 	closeFds(); //close all fds after server closes
 }
 
+bool Server::_signal = true;
+
 void Server::initServer()
 {
 	serSocket();
 
 	std::cout << GRE << "Server Running and listening on port " << _port << std::endl << "Waiting for connections..." << WHI << std::endl;
 	_signal = true;
-	while (true)
+	while (_signal)
 	{
 		signal(SIGINT, handleSignal);
         int poll_count = poll(_pollfds.data(), _pollfds.size(), -1);
@@ -97,8 +99,8 @@ void Server::closeFds()
 
 void Server::handleSignal(int signum)
 {
-	if(signum == SIGINT)
-		throw(std::runtime_error("Server shuting down"));
+	(void) signum;
+	_signal = false;
 }
 
 void Server::acceptNewClient()
@@ -111,7 +113,10 @@ void Server::acceptNewClient()
 		throw(std::runtime_error("Connecting client fail"));
 
 	Client newClient;
-	newClient.setIp(inet_ntoa(client_addr.sin_addr));
+	// PFV
+//	newClient.setIp(inet_ntoa(client_addr.sin_addr));
+	newClient.setIp(std::string(inet_ntoa(client_addr.sin_addr)));
+
 	newClient.setFd(client_sock);
 	_cl.push_back(newClient); // add new client to vector
 
@@ -137,29 +142,24 @@ void Server::clearClient(int fd)
 		Client* client = channel->getClientByFd(fd);
 		if (client)
 		{
-			channel->removeClient(fd);
+			channel->removeClientOperator(fd);
 			std::cout << "Client " << fd << " removed from channel " << channel->getChannelName() << std::endl;
-
-			// Check if the client is an operator in the channel
-			if (channel->isOperator(client))
-			{
-				channel->removeOperator(fd);
-			}
 		}
 		if (channel->countOperators() == 0 && channel->countClients() > 0)
 		{
 			channel->forceOperator();
 		}
 	}
-
-	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end(); ++it)
+	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end();)
 	{
+		// Check if the client is in the Server client list
 		if (it->getFd() == fd)
 		{
 			// Close the client socket
 			close(fd);
 			// Remove from the client list
-			_cl.erase(it);
+			//_cl.erase(it);
+			it = _cl.erase(it);
 
 			// Remove the pollfd entry for the client
 			for (std::vector<pollfd>::iterator poll_it = _pollfds.begin(); poll_it != _pollfds.end(); ++poll_it) 
@@ -171,6 +171,10 @@ void Server::clearClient(int fd)
 				}
 			}
 			break;
+		}
+		else
+		{
+			++it;  // Continua iterando
 		}
 	}
 }
@@ -370,6 +374,7 @@ bool Server::QUIT(Client cl, std::vector<std::string> str)
 	{
 		std::cout << cl.getNick() << " has quit" << std::endl;
 		clearClient(cl.getFd());
+
 		std::string quitMessage;
 		if (str.size() > 1)
 		{
@@ -384,8 +389,6 @@ bool Server::QUIT(Client cl, std::vector<std::string> str)
 		} 
 		else
 			sendMessageAll(cl.getNick() + " has quit (Client disconnected)");
-		
-		exit(0);
 	}
 	return 0;
 }
@@ -590,7 +593,8 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		}
 
 		// Remove the client from the channel
-		channel->clearClient(cl->getFd());
+		channel->removeClientOperator(cl->getFd());
+		std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
 
 		if (channel->countOperators() == 0 && channel->countClients() > 0)
 		{

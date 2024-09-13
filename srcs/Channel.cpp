@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 12:43:26 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/13 16:47:55 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void Channel::addClient(int fd, Client* client)
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
 
-void Channel::clearClient(int cl_fd)
+void Channel::removeClientOperator(int cl_fd)
 {
 	// Remove the client from the list of Channel clients
 	std::map<int, Client*>::iterator it = _clients.find(cl_fd);
