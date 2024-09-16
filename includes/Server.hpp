@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 17:30:12 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/16 15:50:22 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ class Server
 		void acceptNewClient();
 		static void handleSignal(int signum);
 		void closeFds();
-		void clearClient(int fd);
+		void clearClient(int fd, std::string msg);
 		void handleClientMessage(int client_fd);
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
