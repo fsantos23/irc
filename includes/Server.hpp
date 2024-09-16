@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:27:13 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/16 08:53:12 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,9 @@ class Server
 		void clearChannels();
 		
 
+		void closeChannels();
+		void closeClients();
+		
 		//commands
 		int checkQuit(Client cl, std::vector<std::string> str);
 		void PRIVMSG(std::vector<std::string> str, Client *cl);

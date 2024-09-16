@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
+#    By: correia <correia@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
-#    Updated: 2024/09/12 12:22:50 by pviegas          ###   ########.fr        #
+#    Updated: 2024/09/16 09:15:35 by correia          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -62,6 +62,6 @@ run: all
 
 # valgrind
 val: fclean all
-	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8090 123
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=yes ./$(NAME) 8090 123
 
 .PHONY: all clean fclean re run val

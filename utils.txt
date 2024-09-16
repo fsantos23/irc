@@ -1,0 +1,32 @@
+NICK pedro
+PASS 123
+USER correia 0 0 :pcc
+JOIN #1
+
+
+NICK joao
+PASS 123
+USER viega 0 0 :pcc2
+JOIN #1
+
+
+NICK marco
+PASS 123
+USER mar 0 0 :mcc
+
+
+LISTINFO
+PRIVMSG
+PART
+INVITE
+MODE
+KICK
+TOPIC
+
+1-> entrar como novo cliente, sair e entrar outra vez, fazer ^c no servidor
+2-> quando se faz o Quit todos recebem mensagem que o cliente saio???
+3-> se registar um novo cliente e entrar num canal da erro de memoria
+4-> cria-se um novo cliente, regista-se e cria-se um novo canal. Depois cria-se outro cliente e regista-se, junta-se ao canal. da erro de memoria
+5-> e possivel mandar PRIVMSG para um canal que nao faz parte??
+6-> criar um canal fazer  o comando PART e o canal fica sem ninguem, depois outro cliente juntar-se a esse canal ele devia tornar-se o operador??
+7-> o comando PART tem mensagem de saida e se sim que recebem

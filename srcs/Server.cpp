@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:14:02 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/16 09:30:52 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@ Server::Server(int port, const std::string password) : _port(port), _password(pa
 Server::~Server()
 {
 	closeFds(); //close all fds after server closes
+	closeChannels(); //close all channels after server closes
+	closeClients(); //close all clients after server closes
 }
 
 void Server::initServer()
@@ -28,31 +30,36 @@ void Server::initServer()
 
 	std::cout << GRE << "Server Running and listening on port " << _port << std::endl << "Waiting for connections..." << WHI << std::endl;
 	_signal = true;
-	while (true)
+	while (_signal)
 	{
 		signal(SIGINT, handleSignal);
-        int poll_count = poll(_pollfds.data(), _pollfds.size(), -1);
+		signal(SIGQUIT, handleSignal);
+		
+		int poll_count = poll(_pollfds.data(), _pollfds.size(), -1);
 
-        if (poll_count < 0)
+		if (poll_count < 0)
 		{
-            std::cerr << "poll() error." << std::endl;
-            break;
-        }
-        if (poll_count == 0)
-            continue;
-        for (std::vector<pollfd>::size_type i = 0; i < _pollfds.size(); ++i) 
+			std::cerr << "poll() error." << std::endl;
+			break;
+		}
+		if (poll_count == 0)
+			continue;
+		for (std::vector<pollfd>::size_type i = 0; i < _pollfds.size(); ++i) 
 		{
-            pollfd& pfd = _pollfds[i];
+			pollfd& pfd = _pollfds[i];
 
-            if (pfd.revents & POLLIN)
+			if (pfd.revents & POLLIN)
 			{
-                if (pfd.fd == _sockfd)
-                    acceptNewClient();
-                else
-                    handleClientMessage(pfd.fd);
-            }
+				if (pfd.fd == _sockfd)
+					acceptNewClient();
+				else
+					handleClientMessage(pfd.fd);
+			}
 		}
 	}
+	closeClients();
+	closeChannels();
+	closeFds();
 }
 
 void Server::serSocket()
@@ -97,8 +104,25 @@ void Server::closeFds()
 
 void Server::handleSignal(int signum)
 {
-	if(signum == SIGINT)
-		throw(std::runtime_error("Server shuting down"));
+	(void)signum;
+	throw(std::runtime_error("Server shuting down"));
+}
+
+void Server::closeChannels()
+{
+	
+	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete it->second; // Libere a memória alocada para o canal
+	_channels.clear(); // Limpe o mapa de canais
+	
+}
+void Server::closeClients()
+{
+    for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end(); ++it)
+    {
+        close((it)->getFd());
+    }
+    _cl.clear();
 }
 
 void Server::acceptNewClient()
@@ -308,7 +332,7 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	commandhandler["KICK"] = &Server::KICK;
 	commandhandler["TOPIC"] = &Server::TOPIC;
 	// for debugging
-	// commandhandler["LISTINFO"] = &Server::LISTINFO;
+	//commandhandler["LISTINFO"] = &Server::LISTINFO;
 
 	std::map<std::string, CommandHolder>::iterator it = commandhandler.find(str[0]);
 	if(it != commandhandler.end())
