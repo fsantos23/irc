@@ -49,6 +49,7 @@ int main(int argc, char **argv)
 	{
 		std::cout << std::endl << RED << "Error: " << e.what() << WHI << std::endl;
 		server.clearChannels();
+		server.closeFds();
 		return 1;
 	}
 
