@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:11:45 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/16 09:11:57 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ Channel::Channel(std::string _name) : _name(_name), _inviteOnly(false), _topicRe
 
 Channel::~Channel()
 {
-	delete this;
+	//delete this;
 }
 
 std::string	&Channel::getChannelName() 
