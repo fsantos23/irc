@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 12:09:13 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/13 16:47:44 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
+#include <algorithm>
 #include "Server.hpp"
 
 class Channel
@@ -20,7 +21,7 @@ class Channel
 	private:
 		std::string					_name;
 		std::vector<Client*>		_clients;
-		std::vector<Client *>			_operators;
+		std::vector<int>			_operators;
 		bool						_inviteOnly;
 		std::map<int, Client *>		_invitedClients;
 		std::string					_key;
@@ -34,11 +35,8 @@ class Channel
 
 		// Channel management
 		std::string& getChannelName();
-		void createChannel(Client *cl);
 		void setInviteOnly(bool value);
 		bool isInviteOnly() const;
-		// PFV
-		void setMode(std::string mode, bool enable);
 		void setTopic(const std::string& topic);
 		std::string getTopic() const;
 		void setTopicRestricted(bool value);
@@ -47,9 +45,8 @@ class Channel
 		// Client management
 		bool isNewClient(int fd);
 		void addClient(Client* client);
-		void clearClient(int cl_fd);
+		void removeClientOperator(int cl_fd);
 		int countClients();
-		void removeClient(int cl_fd);
 		std::string getClientList();
 		Client* getClientByName(const std::string& nick) const;
 		Client* getClientByFd(int fd) const;

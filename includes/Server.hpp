@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/16 08:53:12 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/13 17:30:12 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 //-----------------------------------------------//
 
 #include <poll.h>
+#include <vector>
+
 #include "Client.hpp"
 #include "Utils.hpp"
 #include "Channel.hpp"
@@ -31,13 +33,13 @@ class Channel;
 class Server
 {
 	private:
-		int _port;
-		std::string _password;
-		int _sockfd;
-		bool _signal;
-		int _sockcl;
-		std::vector <Client> _cl;
-		std::vector <struct pollfd> _pollfds;
+		int 							_port;
+		std::string						_password;
+		int								_sockfd;
+		static bool						_signal;
+		int								_sockcl;
+		std::vector <Client>			_cl;
+		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
 
 	public:
@@ -54,10 +56,8 @@ class Server
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
 		void mainCommands(std::vector<std::string> str, Client *cl);
-		void manageChannels(std::vector<Channel> _ch);
 		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
-		void sendtoChannel(Channel ch, std::string str);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
@@ -65,12 +65,13 @@ class Server
 		void checkUser(std::vector<std::string> str, Client *cl);
 		void clearChannels();
 		
+		bool isNickInUse(const std::string& nick) const;
 
 		void closeChannels();
 		void closeClients();
 		
 		//commands
-		int checkQuit(Client cl, std::vector<std::string> str);
+		bool QUIT(Client cl, std::vector<std::string> str);
 		void PRIVMSG(std::vector<std::string> str, Client *cl);
 		void JOIN(std::vector<std::string> cmd, Client *cl);
 		void PART(std::vector<std::string> cmd, Client* cl);
@@ -80,7 +81,7 @@ class Server
 		void TOPIC(std::vector<std::string> cmd, Client* cl);
 		
 		// for debugging
-		void LISTINFO(std::vector<std::string> cmd, Client* cl);
+		void LCI(std::vector<std::string> cmd, Client* cl);
 };
 
 #endif

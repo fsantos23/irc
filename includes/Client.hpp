@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:17 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 10:52:18 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/13 11:27:45 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <map>
 #include <sstream>
-#include <vector>
 
 class Client {
 	private:
@@ -39,10 +38,10 @@ class Client {
 		int getFd();
 		void setFd(int fd);
 		void setIp(std::string ip);
-		std::string getIp() {return _ip;};
-		std::string getNick() {return _nickname;};
-		std::string getUser() {return _user;};
-		std::string getPass() {return _pass;};
+		std::string getIp() const {return _ip;};
+		std::string getNick() const {return _nickname;};
+		std::string getUser() const {return _user;};
+		std::string getPass() const {return _pass;};
 		void setNick(std::string str) {_nickname = str;};
 		void setUser(std::string str) {_user = str;}
 		void setPass(std::string str) {_pass = str;}

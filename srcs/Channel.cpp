@@ -26,11 +26,6 @@ std::string	&Channel::getChannelName()
 	return (this->_name);
 }
 
-void Channel::createChannel(Client *cl)
-{
-	_clients.push_back(cl);
-}
-
 bool Channel::isNewClient(int fd)
 {
 	for (std::vector<Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -47,7 +42,7 @@ void Channel::addClient(Client* client)
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
 
-void Channel::clearClient(int cl_fd)
+void Channel::removeClientOperator(int cl_fd)
 {
     // Remove client from the _clients map
     for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
@@ -57,14 +52,10 @@ void Channel::clearClient(int cl_fd)
             break;  // Exit loop after removal
         }
     }
-    // Remove client from the _operators vector
-    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it) {
-        if ((*it)->getFd() == cl_fd)
-		{
-            _operators.erase(it);  // Remove from vector
-            break;  // Exit loop after removal
-        }
-    }
+	// Remove the client from the list of operators
+	std::vector<int>::iterator it_op = std::find(_operators.begin(), _operators.end(), cl_fd);
+	if (it_op != _operators.end())
+		_operators.erase(it_op);
 }
 
 void Channel::broadcast(Client* self, const std::string &msg)
@@ -92,7 +83,9 @@ void Channel::listChannelInfo() const
 
 	std::cout << "Invited Clients (socket IDs): ";
 	if (_invitedClients.empty())
+	{
 		std::cout << "No invited clients." << std::endl;
+	}
 	else
 	{
 		for (std::map<int, Client*>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
@@ -106,13 +99,19 @@ void Channel::listChannelInfo() const
 	}
 
 	if (_userLimit > 0)
+	{
 		std::cout << "User Limit: " << _userLimit << std::endl;
+	}
 	else
+	{
 		std::cout << "User Limit: No limit" << std::endl;
+	}
 	
 	std::cout << "Connected Clients (socket IDs): ";
 	if (_clients.empty())
+	{
 		std::cout << "No clients connected." << std::endl;
+	}
 	else
 	{
 		for (std::vector<Client*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -124,6 +123,13 @@ void Channel::listChannelInfo() const
 		}
 		std::cout << std::endl;
 	}
+
+	std::cout << "Channel Operators (socket IDs): ";
+	for (std::vector<int>::const_iterator it = _operators.begin(); it != _operators.end(); ++it)
+	{
+		std::cout << "@" << *it << " ";
+	}
+	std::cout << std::endl << "     ***************************" << std::endl;
 }
 
 void Channel::setInviteOnly(bool value)
@@ -138,16 +144,17 @@ bool Channel::isInviteOnly() const
 
 bool Channel::isOperator(Client* cl) const
 {
-	for (std::vector<Client*>::const_iterator it = _operators.begin(); it != _operators.end(); ++it) {
-        if ((*it)->getFd() == cl->getFd())
-            return true;
-    }
-    return false;
+	return (std::find(_operators.begin(), _operators.end(), cl->getFd()) != _operators.end());
 }
 
 void Channel::addOperator(Client* cl)
 {
-	_operators.push_back(cl);
+	// Check if the client is not already an operator
+	if (isOperator(cl))
+		std::cout << "Client " << cl->getNick() << " is already an operator." << std::endl;
+	else
+		_operators.push_back(cl->getFd());
+	return;
 }
 
 int Channel::countOperators()
@@ -162,13 +169,17 @@ int Channel::countClients()
 
 void Channel::forceOperator()
 {
-	if (countOperators() == 0 && !_clients.empty())
+
+	// Upgrades the first client in the list to operator privileges.
+	Client* firstClient = *_clients.begin();
+	if (firstClient == NULL)
 	{
 		// Upgrades the first client in the list to operator privileges.
-		Client* firstClient = *_clients.begin();
-		addOperator(firstClient);
-		std::cout << firstClient->getNick() << " has been promoted to operator." << std::endl;
+		std::cout << "No clients in the channel." << std::endl;
+		return;
 	}
+	addOperator(firstClient);
+	std::cout << firstClient->getNick() << " has been promoted to operator." << std::endl;
 }
 
 void Channel::inviteClient(Client* cl)
@@ -181,23 +192,6 @@ void Channel::inviteClient(Client* cl)
 bool Channel::isInvited(Client* cl)
 {
 	return (_invitedClients.find(cl->getFd()) != _invitedClients.end());
-}
-
-void Channel::removeClient(int cl_fd)
-{
-	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if ((*it)->getFd() == cl_fd) {
-            _clients.erase(it);
-            break;
-        }
-    }
-    
-    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it) {
-        if ((*it)->getFd() == cl_fd) {
-            _operators.erase(it);
-            break;
-        }
-    }
 }
 
 void Channel::setKey(const std::string& key)
@@ -224,6 +218,8 @@ bool Channel::checkKey(const std::string& key)
 
 void Channel::sendMessageChannel(std::string msg)
 {
+	
+	std::cout << "Send message to Channel: " << _name << std::endl;
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
 	{
@@ -236,14 +232,14 @@ std::string Channel::getClientList()
 	std::string list = "";
 	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		for(std::vector<Client*>::iterator it2 = _operators.begin(); it2 != _operators.end(); ++it2)
+		for(std::vector<int>::iterator it2 = _operators.begin(); it2 != _operators.end(); ++it2)
 		{
-			if((*it2)->getFd() == (*it)->getFd())
+			if(*it2 == (*it)->getFd())
 				list += "@";
 		}
 		list += (*it)->getNick() + " ";
 	}
-	return list;
+	return (list);
 }
 
 void Channel::setTopic(const std::string& topic)
@@ -292,14 +288,10 @@ Client* Channel::getClientByName(const std::string& nick) const
 
 void Channel::removeOperator(int cl_fd)
 {
-	for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it)
-	{
-        if ((*it)->getFd() == cl_fd)
-		{
-            _operators.erase(it);
-            return;
-        }
-    }
+	std::vector<int>::iterator it = std::find(_operators.begin(), _operators.end(), cl_fd);
+
+	if (it != _operators.end())
+		_operators.erase(it);
 }
 
 Client* Channel::getClientByFd(int fd) const
