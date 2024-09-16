@@ -283,10 +283,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 				send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
 			}
 			else if (i == 1)
-			{
 				checkNick(str[1], cl);
-				std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
-			}
 			else if (user[i] == "*" && i == 0)
 			{
 				checkUser(str, cl);
@@ -311,6 +308,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
     {
         if (user[i] == "*" || user[i].empty())
         {
+			std::cout << RED << "str error: " << WHI << str[0] << std::endl;
             sendError(cl->getFd(), cl->getNick(), 451, ":You have not registered");
             return 1;
         }
@@ -320,8 +318,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 
 void Server::checkNick(std::string str, Client *cl)
 {
-	//TODO
-	//falta ver o nick que nao e case sensitive ex: paulo PAULO nao podem existir os dois
+
 	std::string lowerNick = toLowerCase(str);
 	for (std::vector<Client>::const_iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
@@ -329,6 +326,7 @@ void Server::checkNick(std::string str, Client *cl)
 			return ;
 	}
 	cl->setNick(str);
+	std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
 }
 
 void Server::checkUser(std::vector<std::string> str, Client* cl)
@@ -347,7 +345,7 @@ void Server::checkUser(std::vector<std::string> str, Client* cl)
 	}
 	// delete the ':' from the string
 	str[4].erase(0, 1);
-	cl->setUser(str[4]);
+	cl->setUser(str[1]);
 }
 
 void Server::mainCommands(std::vector<std::string> str, Client *cl)
@@ -409,6 +407,7 @@ bool Server::QUIT(Client cl, std::vector<std::string> str)
 		} 
 		else
 			sendMessageAll(cl.getNick() + " has quit (Client disconnected)");
+		return 1;
 	}
 	return 0;
 }

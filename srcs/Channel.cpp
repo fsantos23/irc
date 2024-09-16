@@ -38,6 +38,8 @@ bool Channel::isNewClient(int fd)
 
 void Channel::addClient(Client* client)
 {
+	if(!isNewClient(client->getFd()))
+		return ;
 	_clients.push_back(client);
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
