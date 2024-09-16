@@ -28,6 +28,7 @@ int main(int ac, char **av)
 	catch (const std::exception &e)
 	{
 		std::cout << std::endl << RED << "Error: " << e.what() << WHI << std::endl;
+		ser.clearChannels();
 		return 1;
 	}
 	return 0;

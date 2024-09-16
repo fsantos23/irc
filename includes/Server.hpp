@@ -63,6 +63,7 @@ class Server
 		Channel* getChannel(const std::string& name);
 		void checkNick(std::string str, Client *cl);
 		void checkUser(std::vector<std::string> str, Client *cl);
+		void clearChannels();
 		
 
 		//commands

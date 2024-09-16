@@ -18,10 +18,10 @@ Channel::Channel(std::string _name) : _name(_name), _inviteOnly(false), _topicRe
 
 Channel::~Channel()
 {
-	delete this;
+	
 }
 
-std::string	&Channel::getChannelName() 
+std::string	&Channel::getChannelName()
 {
 	return (this->_name);
 }
@@ -185,12 +185,17 @@ bool Channel::isInvited(Client* cl)
 
 void Channel::removeClient(int cl_fd)
 {
-	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-        if ((*it)->getFd() == cl_fd) 
-		{
+	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if ((*it)->getFd() == cl_fd) {
             _clients.erase(it);
-            return;
+            break;
+        }
+    }
+    
+    for (std::vector<Client*>::iterator it = _operators.begin(); it != _operators.end(); ++it) {
+        if ((*it)->getFd() == cl_fd) {
+            _operators.erase(it);
+            break;
         }
     }
 }
@@ -222,7 +227,6 @@ void Channel::sendMessageChannel(std::string msg)
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		std::cout << "nick: " << (*it)->getNick() << std::endl;
 		sendMessageToClient((*it)->getFd(), msg);
 	}
 }
