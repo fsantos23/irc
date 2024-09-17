@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 18:13:24 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/17 20:25:34 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -798,27 +798,33 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 		channel->sendMessageChannel(message);
 	}
 	// Handle operator mode (+o/-o)
-    else if (mode == "+o")
-    {
-        Client* client = channel->getClientByName(key_nick_or_limit);
-        if (client)
-        {
-            channel->addOperator(client);
-            sendMessageToClient(cl->getFd(), ":42_IRC 324 " + key_nick_or_limit + " " + channelName + " :Added as Operator\r\n");
-        }
-        else
-            sendMessageClient(cl->getFd(), cl->getNick(), 324, key_nick_or_limit + " NOT FOUND in " + channelName + " :NOT FOUND");
-    }
-    else if (mode == "-o")
-    {
-        Client* client = channel->getClientByName(key_nick_or_limit);
-        if (client)
-        {
-            channel->removeOperator(client->getFd());
-            sendMessageToClient(cl->getFd(), ":42_IRC 324 " + key_nick_or_limit + " " + channelName + " :Removed as Operator\r\n");
-        }
-        else
-            sendMessageClient(cl->getFd(), cl->getNick(), 324, key_nick_or_limit + " NOT FOUND in " + channelName + " :NOT FOUND");
+	else if (mode == "+o")
+	{
+		Client* client = channel->getClientByName(key_nick_or_limit);
+		if (client)
+		{
+			if(channel->addOperator(client))
+			{
+				message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+				channel->sendMessageChannel(message);
+			}
+		}
+		else
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 401, key_nick_or_limit + " :No such nick\r\n");
+		}
+	}
+	else if (mode == "-o")
+	{
+		Client* client = channel->getClientByName(key_nick_or_limit);
+		if (client)
+		{
+			channel->removeOperator(client->getFd());
+			message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+			channel->sendMessageChannel(message);
+		}
+		else
+			sendMessageClient(cl->getFd(), cl->getNick(), 401, key_nick_or_limit + " :No such nick\r\n");
     }
     // Handle topic restriction mode (+t/-t)
     else if (mode == "+t")

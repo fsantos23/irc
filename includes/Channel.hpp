@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 16:47:44 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/17 20:16:14 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,7 @@ class Channel
 
 		// Operators management
 		bool isOperator(Client* cl) const;
-		void addOperator(Client* cl);
+		bool addOperator(Client* cl);
 		int countOperators();
 		void forceOperator();
 		void removeOperator(int cl_fd);
