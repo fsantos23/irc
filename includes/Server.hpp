@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/16 15:50:22 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/17 15:57:13 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,11 +64,11 @@ class Server
 		void checkNick(std::string str, Client *cl);
 		void checkUser(std::vector<std::string> str, Client *cl);
 		void clearChannels();
-		
-		bool isNickInUse(const std::string& nick) const;
-
-		void closeChannels();
-		void closeClients();
+// PFV		
+//		bool isNickInUse(const std::string& nick) const;
+// PFV
+//		void closeChannels();
+//		void closeClients();
 		
 		//commands
 		bool QUIT(Client cl, std::vector<std::string> str);
