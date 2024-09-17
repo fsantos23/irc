@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/16 17:49:15 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/17 12:09:49 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -863,7 +863,7 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	}
 
 	// Extract nickname and channel name
-	std::string clientNick = cmd[1];
+	std::string invitedNick = cmd[1];
 	std::string channelName = cmd[2];
 
 	// Checks if the channel name is valid (must start with '#')
@@ -892,7 +892,7 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	Client* invitedClient = NULL;
 	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
-		if (it->getNick() == clientNick)
+		if (it->getNick() == invitedNick)
 		{
 			invitedClient = &(*it);
 			break;
@@ -901,27 +901,24 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	
 	if (!invitedClient)
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 401 " + cl->getNick() + " " + clientNick + " :No such nick\r\n");
+		sendMessageToClient(cl->getFd(), ":42_IRC 401 " + cl->getNick() + " " + invitedNick + " :No such nick\r\n");
 		return;
 	}
 
 	// Checks if the client is already in the channel
 	if (!channel->isNewClient(invitedClient->getFd()))
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 443 " + cl->getNick() + " " + channelName + " :Client is already in the channel\r\n");
+		sendMessageToClient(cl->getFd(), ":42_IRC 443 " + cl->getNick() + " " + invitedNick + " " + channelName + " :is already on channel\r\n");
 		return;
 	}
 
 	// Add the client to the channel invited clients list
 	channel->inviteClient(invitedClient);
 
-// PFV
-	std::string inviteMessage = ":42_IRC " + cl->getNick() + " INVITE " + invitedClient->getNick() + " :" + channelName + "\r\n";
-//	std::string inviteMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " INVITE " + invitedClient->getNick() + " :" + channelName + "\r\n";
-	sendMessageToClient(invitedClient->getFd(), inviteMessage);
-// PFV
-	std::string confirmationMessage = ":42_IRC " + cl->getNick() + " " + cmd[0] + " " + clientNick + " :" + channelName + "\r\n";
-	sendMessageToClient(cl->getFd(), confirmationMessage);
+	std::string inviteMessage = ":42_IRC 341 " + cl->getNick() + " " + invitedClient->getNick() + " " + channelName + "\r\n";
+	sendMessageToClient(cl->getFd(), inviteMessage);
+	std::string confirmationMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + invitedClient->getNick() + " " + channelName + "\r\n";
+	sendMessageToClient(invitedClient->getFd(), confirmationMessage);
 
 	channel->listChannelInfo();
 }
