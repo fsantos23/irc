@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/16 09:11:57 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/17 13:41:02 by fsantos2         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ std::string	&Channel::getChannelName()
 	return (this->_name);
 }
 
+// PFV
+/*
 bool Channel::isNewClient(int fd)
 {
 	for (std::vector<Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -35,15 +37,26 @@ bool Channel::isNewClient(int fd)
     }
     return true;
 }
+*/
+
+bool Channel::isNewClient(int fd)
+{
+	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (*it != NULL && (*it)->getFd() == fd)
+			return (false);
+	}
+	return (true);
+}
+
 
 void Channel::addClient(Client* client)
 {
-	if(!isNewClient(client->getFd()))
-		return ;
 	_clients.push_back(client);
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
-
+// PFV
+/*
 void Channel::removeClientOperator(int cl_fd)
 {
     // Remove client from the _clients map
@@ -58,6 +71,30 @@ void Channel::removeClientOperator(int cl_fd)
 	std::vector<int>::iterator it_op = std::find(_operators.begin(), _operators.end(), cl_fd);
 	if (it_op != _operators.end())
 		_operators.erase(it_op);
+}
+*/
+
+void Channel::removeClientOperator(int cl_fd)
+{
+	// Remove client from the _clients vector
+	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); /* sem incremento */)
+	{
+		if ((*it)->getFd() == cl_fd) 
+		{
+			/* delete *it; */
+			it = _clients.erase(it);
+		}
+		else 
+		{
+			++it;
+		}
+	}
+
+	// Remove the client from the Operators list
+	std::vector<int>::iterator it_op = std::find(_operators.begin(), _operators.end(), cl_fd);
+	if (it_op != _operators.end())
+		_operators.erase(it_op);
+		
 }
 
 void Channel::broadcast(Client* self, const std::string &msg)
@@ -155,7 +192,13 @@ void Channel::addOperator(Client* cl)
 	if (isOperator(cl))
 		std::cout << "Client " << cl->getNick() << " is already an operator." << std::endl;
 	else
+	{
 		_operators.push_back(cl->getFd());
+		// Server console MSG
+		std::cout << cl->getNick() << " has been promoted to operator." << std::endl;
+		// Sends a message to the channel informing that the client has been promoted to operator.
+		sendMessageChannel(":42_IRC MODE " + _name + " +o " + cl->getNick() + "\r\n");
+	}
 	return;
 }
 
@@ -181,7 +224,6 @@ void Channel::forceOperator()
 		return;
 	}
 	addOperator(firstClient);
-	std::cout << firstClient->getNick() << " has been promoted to operator." << std::endl;
 }
 
 void Channel::inviteClient(Client* cl)

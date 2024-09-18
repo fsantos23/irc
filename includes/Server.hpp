@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 17:30:12 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/17 12:41:45 by fsantos2         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ class Server
 		int								_sockfd;
 		static bool						_signal;
 		int								_sockcl;
-		std::vector <Client>			_cl;
+		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
 
@@ -51,7 +51,7 @@ class Server
 		void acceptNewClient();
 		static void handleSignal(int signum);
 		void closeFds();
-		void clearClient(int fd);
+		void clearClient(int fd, std::string msg);
 		void handleClientMessage(int client_fd);
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
@@ -71,7 +71,7 @@ class Server
 		void closeClients();
 		
 		//commands
-		bool QUIT(Client cl, std::vector<std::string> str);
+		bool QUIT(Client *cl, std::vector<std::string> str);
 		void PRIVMSG(std::vector<std::string> str, Client *cl);
 		void JOIN(std::vector<std::string> cmd, Client *cl);
 		void PART(std::vector<std::string> cmd, Client* cl);
