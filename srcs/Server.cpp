@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 20:25:34 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/18 15:58:31 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -693,16 +693,40 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 		{
 			if(it->first == cmd[1])
 			{
-				std::string msg = ":42_IRC MODE " + cmd[1] + " ";
-				if(it->second->getUserLimit())
-					msg += "+l ";
-				if(!it->second->getKey().empty())
-					msg += "+k ";
-				if(!it->second->getTopic().empty())
-					msg += "+t";
-				msg += "\r\n";
-				send(cl->getFd(), msg.c_str(), msg.length(), 0);
-			return;
+				if ( it->second->isOperator(cl))
+				{
+					
+					int aux = 0;
+					std::string msga = " " + cmd[1] + " ";
+					std::string msgb = "";
+					std::string info = " ";
+					if(it->second->getUserLimit())
+					{
+						msgb += "l";
+						aux = 1;
+						std::stringstream ss;
+						ss << it->second->getUserLimit();  // Converta o int para string
+						info += ss.str() + " ";
+					}
+					if(!it->second->getKey().empty())
+					{
+						msgb += "k";
+						aux = 1;
+						info += it->second->getKey() + " ";
+					}
+					if(!it->second->getTopic().empty())
+					{
+						msgb += "t";
+						aux = 1;
+					}
+					if (aux == 1)
+						msga += "+" + msgb;
+					msga += info;
+	 				sendMessageClient(cl->getFd(), cl->getNick(), 324, msga);
+				}
+				else
+					sendMessageClient(cl->getFd(), cl->getNick(), 482, it->second->getChannelName() + " :You're not channel operator");
+				return;
 			}
 		}
 	}
