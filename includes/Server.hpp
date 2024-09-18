@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 12:41:45 by fsantos2         ###   ########.fr       */
+/*   Updated: 2024/09/17 16:13:21 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ class Server
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
 		void mainCommands(std::vector<std::string> str, Client *cl);
-		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
+		void sendMessageClient(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
@@ -64,11 +64,11 @@ class Server
 		void checkNick(std::string str, Client *cl);
 		void checkUser(std::vector<std::string> str, Client *cl);
 		void clearChannels();
-		
-		bool isNickInUse(const std::string& nick) const;
-
-		void closeChannels();
-		void closeClients();
+// PFV		
+//		bool isNickInUse(const std::string& nick) const;
+// PFV
+//		void closeChannels();
+//		void closeClients();
 		
 		//commands
 		bool QUIT(Client *cl, std::vector<std::string> str);

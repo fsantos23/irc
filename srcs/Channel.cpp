@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 13:41:02 by fsantos2         ###   ########.fr       */
+/*   Updated: 2024/09/17 20:15:57 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,20 +186,22 @@ bool Channel::isOperator(Client* cl) const
 	return (std::find(_operators.begin(), _operators.end(), cl->getFd()) != _operators.end());
 }
 
-void Channel::addOperator(Client* cl)
+bool Channel::addOperator(Client* cl)
 {
 	// Check if the client is not already an operator
 	if (isOperator(cl))
+	{
+		// Server console MSG
 		std::cout << "Client " << cl->getNick() << " is already an operator." << std::endl;
+		return (false);
+	}
 	else
 	{
 		_operators.push_back(cl->getFd());
 		// Server console MSG
 		std::cout << cl->getNick() << " has been promoted to operator." << std::endl;
-		// Sends a message to the channel informing that the client has been promoted to operator.
-		sendMessageChannel(":42_IRC MODE " + _name + " +o " + cl->getNick() + "\r\n");
+		return (true);
 	}
-	return;
 }
 
 int Channel::countOperators()

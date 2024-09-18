@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 13:46:31 by fsantos2         ###   ########.fr       */
+/*   Updated: 2024/09/18 15:58:31 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -358,7 +358,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 				return (1);
 			else
 			{
-				sendError(cl->getFd(), cl->getNick(), 462, ":You may not reregister");
+				sendMessageClient(cl->getFd(), cl->getNick(), 462, ":You may not reregister");
 				return (1);
 			}
 			return (1);
@@ -368,7 +368,7 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
     {
         if (user[i] == "*" || user[i].empty())
         {
-            sendError(cl->getFd(), cl->getNick(), 451, ":You have not registered");
+            sendMessageClient(cl->getFd(), cl->getNick(), 451, ":You have not registered");
             return 1;
         }
     }
@@ -382,7 +382,10 @@ void Server::checkNick(std::string str, Client *cl)
 	for (std::vector<Client *>::const_iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
 		if (toLowerCase((*it)->getNick()) == lowerNick)
+		{
+			//falta enviar mensagem a dizer que o nick ja esta a ser usado
 			return ;
+		}
 	}
 	cl->setNick(str);
 	std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
@@ -426,16 +429,16 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	if(it != commandhandler.end())
 		(this->*(it->second))(str, cl);
 	else
-		sendError(cl->getFd(), cl->getNick(), 421, ":Unknown command");
+		sendMessageClient(cl->getFd(), cl->getNick(), 421, ":Unknown command");
 }
 
-void Server::sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message)
+void Server::sendMessageClient(int client_fd, const std::string& nickname, int error_code, const std::string& message)
 {
-    std::string server_name = "42_IRC";
-    std::ostringstream oss;
-    oss << ":" << server_name << " " << error_code << " " << nickname << " " << message << "\r\n";
-    std::string error_message = oss.str();
-    send(client_fd, error_message.c_str(), error_message.length(), 0);
+	std::string server_name = "42_IRC";
+	std::ostringstream oss;
+	oss << ":" << server_name << " " << error_code << " " << nickname << " " << message << "\r\n";
+	std::string error_message = oss.str();
+	send(client_fd, error_message.c_str(), error_message.length(), 0);
 }
 
 void Server::sendMessageAll(std::string msg)
@@ -483,7 +486,7 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
     std::string sender = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " PRIVMSG ";
     if (str.size() < 3) 
     {
-        sendError(cl->getFd(), cl->getNick(), 411, ":No recipient given");
+        sendMessageClient(cl->getFd(), cl->getNick(), 411, ":No recipient given");
         return;
     }
     std::string fullMessage;
@@ -521,66 +524,61 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 		}
 	}
 	if (!recipientFound)
-		sendError(cl->getFd(), cl->getNick(), 401, ":No such nick/channel");
+		sendMessageClient(cl->getFd(), cl->getNick(), 401, ":No such nick/channel");
 }
 
-//TODO
-//the first person to join the channel works properly the others don't
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
-    // Check if there are enough parameters for the JOIN command.
-    if (cmd.size() < 2)
-    {
+	// Check if there are enough parameters for the JOIN command.
+	if (cmd.size() < 2)
+	{
 		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " JOIN :Not enough parameters\r\n";
 		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
-        return;
-    }
+		return;
+	}
 
-    // Split the channel names.
-    std::vector<std::string> channels = split(cmd[1], ",");
+	// Split the channel names.
+	std::vector<std::string> channels = split(cmd[1], ",");
 	std::string key = (cmd.size() > 2) ? cmd[2] : "";
 	std::vector<std::string> keypass = split(key, ",");
 
 	// Iterator for keys
- 	std::vector<std::string>::iterator key_it = keypass.begin();
+	std::vector<std::string>::iterator key_it = keypass.begin();
 
-    for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
-    {
-        // Ensure the channel name starts with '#'.
-        if ((*it)[0] != '#')
-        {
-            sendError(cl->getFd(), cl->getNick(), 403, *it + ":No such channel");
-            continue;
-        }
+	for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		// Ensure the channel name starts with '#'.
+		if ((*it)[0] != '#')
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+			continue;
+		}
 
-        // Join or create the channel.
-        Channel* channel = joinChannel(*it, cl);
+		// Join or create the channel.
+		Channel* channel = joinChannel(*it, cl);
 		
 		// Check if the channel is invite-only and if the client is allowed to join.
 		if (channel->isInviteOnly() && !channel->isInvited(cl))
 		{
-			sendError(cl->getFd(), cl->getNick(), 473, *it + ":Cannot join channel (invite only)");
+			sendMessageClient(cl->getFd(), cl->getNick(), 473, *it + ":Cannot join channel (+i)");
 			continue;
 		}
 
 		// Validate the channel key if necessary.
 		if (channel->hasKey() && !channel->checkKey(*key_it))
 		{
-			sendError(cl->getFd(), cl->getNick(), 475, *it + ":Cannot join channel (incorrect key)");
+			sendMessageClient(cl->getFd(), cl->getNick(), 475, *it + ":Cannot join channel (+k)");
 			continue;
 		}
 
 		// Check if the client is already in the channel.
 		if (!channel->isNewClient(cl->getFd()))
-		{
-			sendError(cl->getFd(), cl->getNick(), 443, *it + ":You're already in the channel");
 			continue;
-		}
 
 		// Check if the channel has a user limit and if it has been reached.
 		if (channel->hasUserLimit() && channel->countClients() >= channel->getUserLimit())
 		{
-			sendError(cl->getFd(), cl->getNick(), 471, *it + ":Cannot join channel (channel is full)");
+			sendMessageClient(cl->getFd(), cl->getNick(), 471, *it + ":Cannot join channel (+l)");
 			continue;
 		}
 		
@@ -589,16 +587,17 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
 
 		// 1. Broadcast the JOIN message to the channel.
-		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " JOIN " + *it + "\r\n";
+		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
 		channel->sendMessageChannel(joinMessage);
 
-
-		std::string nameList = channel->getClientList();
+		//PFV
+		//isto e apenas para ajudar no debug
+		/* std::string nameList = channel->getClientList();
 		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
 		sendMessageToClient(cl->getFd(), nameReply);
 
 		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
-		sendMessageToClient(cl->getFd(), endOfNamesReply);
+		sendMessageToClient(cl->getFd(), endOfNamesReply); */
 
 		if (key_it != keypass.end())
 			++key_it;
@@ -606,7 +605,6 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		channel->listChannelInfo();
 	}
 }
-
 
 Channel* Server::joinChannel(const std::string& name, Client *cl)
 {
@@ -623,28 +621,18 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
 
 	// Send a message to the client informing them that they are the operator
-	sendError(cl->getFd(), cl->getNick(), 324, name + " +o");
-
-	sendError(cl->getFd(), cl->getNick(), 331, name + " :No topic is set");
+	sendMessageClient(cl->getFd(), cl->getNick(), 324, name + " +o");
+	sendMessageClient(cl->getFd(), cl->getNick(), 331, name + " :No topic is set");
 	
 	return (newChannel);
 }
-
-bool Server::isChannelExist(std::string channelName)
-{
-	if (_channels.find(channelName) != _channels.end())
-		return (true);
-	else
-		return (false);
-}
-
 
 void Server::PART(std::vector<std::string> cmd, Client* cl)
 {
 	if (cmd.size() < 2)
 	{
 		// Not enough parameters
-		sendError(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
+		sendMessageClient(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
 		return;
 	}
 
@@ -656,7 +644,7 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		if ((*it)[0] != '#')
 		{
 			// Invalid channel name
-			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+			sendMessageClient(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
 			continue;
 		}
 
@@ -664,7 +652,7 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		if (!channel)
 		{
 			// Channel does not exist
-			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+			sendMessageClient(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
 			continue;
 		}
 
@@ -672,9 +660,13 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		{
 			// Client is not on the channel
 			std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
-			sendError(cl->getFd(), cl->getNick(), 422, *it + " :You're not on that channel");
+			sendMessageClient(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
 			continue;
 		}
+
+		// Broadcast a message to the channel notifying other users that the client has left
+		std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
+		channel->sendMessageChannel(message);
 
 		// Remove the client from the channel
 		channel->removeClientOperator(cl->getFd());
@@ -685,146 +677,175 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 			channel->forceOperator();
 		}
 
-		// Broadcast a message to the channel notifying other users that the client has left
-		std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " PART " + *it + "\r\n";
-		channel->sendMessageChannel(message);
-
 		// for debugging
 		channel->listChannelInfo();
 	}
 }
 
-
-Channel* Server::getChannel(const std::string& name)
-{
-	std::map<std::string, Channel*>::iterator it = _channels.find(name);
-	if (it != _channels.end())
-		return (it->second);
-	return (NULL);
-}
-
 void Server::MODE(std::vector<std::string> cmd, Client* cl)
 {
-    if(cmd.size() == 2)
-    {
-        for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-        {
-            if(it->first == cmd[1])
-            {
-                std::string msg = ":42_IRC MODE " + cmd[1] + " ";
-                if(it->second->getUserLimit())
-                    msg += "+l ";
-                if(!it->second->getKey().empty())
-                    msg += "+k ";
-                if(!it->second->getTopic().empty())
-                    msg += "+t";
-                msg += "\r\n";
-                send(cl->getFd(), msg.c_str(), msg.length(), 0);
-                return;
-            }
-        }
-    }
+	if(cmd.size() == 2)
+	{
+		for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		{
+			if(it->first == cmd[1])
+			{
+				if ( it->second->isOperator(cl))
+				{
+					
+					int aux = 0;
+					std::string msga = " " + cmd[1] + " ";
+					std::string msgb = "";
+					std::string info = " ";
+					if(it->second->getUserLimit())
+					{
+						msgb += "l";
+						aux = 1;
+						std::stringstream ss;
+						ss << it->second->getUserLimit();  // Converta o int para string
+						info += ss.str() + " ";
+					}
+					if(!it->second->getKey().empty())
+					{
+						msgb += "k";
+						aux = 1;
+						info += it->second->getKey() + " ";
+					}
+					if(!it->second->getTopic().empty())
+					{
+						msgb += "t";
+						aux = 1;
+					}
+					if (aux == 1)
+						msga += "+" + msgb;
+					msga += info;
+	 				sendMessageClient(cl->getFd(), cl->getNick(), 324, msga);
+				}
+				else
+					sendMessageClient(cl->getFd(), cl->getNick(), 482, it->second->getChannelName() + " :You're not channel operator");
+				return;
+			}
+		}
+	}
 
-    if (cmd.size() < 3)
-    {
-        sendError(cl->getFd(), cl->getNick(), 461, cmd[0] + " :Not enough parameters given");
-        return;
-    }
+	if (cmd.size() < 3)
+	{
+		sendMessageClient(cl->getFd(), cl->getNick(), 461, cmd[0] + " :Not enough parameters given");
+		return;
+	}
 
-    // Extract channel name and mode
-    std::string channelName = cmd[1];
-    std::string mode = cmd[2];
+	// Extract channel name and mode
+	std::string channelName = cmd[1];
+	std::string mode = cmd[2];
 
-    // Extract key, nick or user limit
-    std::string key_nick_or_limit = (cmd.size() > 3) ? cmd[3] : "";
+	// Extract key, nick or user limit
+	std::string key_nick_or_limit = (cmd.size() > 3) ? cmd[3] : "";
 
-    // Check if the channel name is valid (must start with '#')
-    if (channelName[0] != '#')
-    {
-        sendError(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
-        return;
-    }
+	// Check if the channel name is valid (must start with '#')
+	if (channelName[0] != '#')
+	{
+		sendMessageClient(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
+		return;
+	}
 
-    Channel* channel = getChannel(channelName);
-    if (!channel)
-    {
-        sendError(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
-        return;
-    }
+	Channel* channel = getChannel(channelName);
+	if (!channel)
+	{
+		sendMessageClient(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
+		return;
+	}
 
-    // Check if the client has operator permissions in this channel.
-    if (!channel->isOperator(cl))
-    {
-        sendError(cl->getFd(), cl->getNick(), 482, channelName + " :You're not channel operator");
-        return;
-    }
+	// Check if the client has operator permissions in this channel.
+	if (!channel->isOperator(cl))
+	{
+		sendMessageClient(cl->getFd(), cl->getNick(), 482, channelName + " :You're not channel operator");
+		return;
+	}
 
-    // Handle invite-only mode (+i/-i)
-    if (mode == "+i")
-    {
-        channel->setInviteOnly(true);
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :Invite-only mode enabled\r\n");
-    }
-    else if (mode == "-i")
-    {
-        channel->setInviteOnly(false);
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :Invite-only mode disabled\r\n");
-    }
-    // Handle key mode (+k/-k)
-    else if (mode == "+k")
-    {
-        if (key_nick_or_limit.empty())
-        {
-            sendError(cl->getFd(), cl->getNick(), 461, cmd[0] + " :Key required");
-            return;
-        }
-        channel->setKey(key_nick_or_limit);
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :Channel key set to " + key_nick_or_limit + "\r\n");
-    }
-    else if (mode == "-k")
-    {
-        channel->removeKey();
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :Channel key removed\r\n");
-    }
-    // Handle user limit mode (+l/-l)
-    else if (mode == "+l")
-    {
-        if (key_nick_or_limit.empty() || !isdigit(key_nick_or_limit[0]))
-        {
-            sendError(cl->getFd(), cl->getNick(), 461, channelName + " :User limit required");
-            return;
-        }
-        int userLimit = atoi(key_nick_or_limit.c_str());
-        channel->setUserLimit(userLimit);
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :User limit set to " + key_nick_or_limit + "\r\n");
-    }
-    else if (mode == "-l")
-    {
-        channel->setUserLimit(0);
-        sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :User limit removed\r\n");
-    }
-    // Handle operator mode (+o/-o)
-    else if (mode == "+o")
-    {
-        Client* client = channel->getClientByName(key_nick_or_limit);
-        if (client)
-        {
-            channel->addOperator(client);
-            sendMessageToClient(cl->getFd(), ":42_IRC 324 " + key_nick_or_limit + " " + channelName + " :Added as Operator\r\n");
-        }
-        else
-            sendError(cl->getFd(), cl->getNick(), 324, key_nick_or_limit + " NOT FOUND in " + channelName + " :NOT FOUND");
-    }
-    else if (mode == "-o")
-    {
-        Client* client = channel->getClientByName(key_nick_or_limit);
-        if (client)
-        {
-            channel->removeOperator(client->getFd());
-            sendMessageToClient(cl->getFd(), ":42_IRC 324 " + key_nick_or_limit + " " + channelName + " :Removed as Operator\r\n");
-        }
-        else
-            sendError(cl->getFd(), cl->getNick(), 324, key_nick_or_limit + " NOT FOUND in " + channelName + " :NOT FOUND");
+	std::string message;
+	// Handle invite-only mode (+i/-i)
+	if (mode == "+i")
+	{
+		channel->setInviteOnly(true);
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + mode + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	else if (mode == "-i")
+	{
+		channel->setInviteOnly(false);
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + mode + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	// Handle key mode (+k/-k)
+	else if (mode == "+k")
+	{
+		if (key_nick_or_limit.empty())
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 461, cmd[0] + mode + " :Not enough parameters\r\n");
+			return;
+		}
+		channel->setKey(key_nick_or_limit);
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	else if (mode == "-k")
+	{
+		channel->removeKey();
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	// Handle user limit mode (+l/-l)
+	else if (mode == "+l")
+	{
+		if (key_nick_or_limit.empty())
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 461, channelName + " " + mode + " :Not enough parameters");
+			return;
+		}
+		if (!isdigit(key_nick_or_limit[0]))
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 461, channelName + " " + mode + " :Not a valid limit");
+			return;
+		}		
+		int userLimit = atoi(key_nick_or_limit.c_str());
+		channel->setUserLimit(userLimit);
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	else if (mode == "-l")
+	{
+		channel->setUserLimit(0);
+		message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+		channel->sendMessageChannel(message);
+	}
+	// Handle operator mode (+o/-o)
+	else if (mode == "+o")
+	{
+		Client* client = channel->getClientByName(key_nick_or_limit);
+		if (client)
+		{
+			if(channel->addOperator(client))
+			{
+				message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+				channel->sendMessageChannel(message);
+			}
+		}
+		else
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 401, key_nick_or_limit + " :No such nick\r\n");
+		}
+	}
+	else if (mode == "-o")
+	{
+		Client* client = channel->getClientByName(key_nick_or_limit);
+		if (client)
+		{
+			channel->removeOperator(client->getFd());
+			message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + channelName + " " + mode + " " + key_nick_or_limit + "\r\n";
+			channel->sendMessageChannel(message);
+		}
+		else
+			sendMessageClient(cl->getFd(), cl->getNick(), 401, key_nick_or_limit + " :No such nick\r\n");
     }
     // Handle topic restriction mode (+t/-t)
     else if (mode == "+t")
@@ -838,7 +859,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
         sendMessageToClient(cl->getFd(), ":42_IRC 324 " + cl->getNick() + " " + channelName + " :Anyone can change the topic\r\n");
     }
     else
-        sendError(cl->getFd(), cl->getNick(), 472, mode + " :Unknown mode");
+        sendMessageClient(cl->getFd(), cl->getNick(), 472, mode + " :Unknown mode");
 
     // For debugging purposes
     channel->listChannelInfo();
@@ -855,7 +876,7 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	}
 
 	// Extract nickname and channel name
-	std::string clientNick = cmd[1];
+	std::string invitedNick = cmd[1];
 	std::string channelName = cmd[2];
 
 	// Checks if the channel name is valid (must start with '#')
@@ -884,7 +905,7 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	Client* invitedClient = NULL;
 	for (std::vector<Client *>::iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
-		if ((*it)->getNick() == clientNick)
+		if ((*it)->getNick() == invitedNick)
 		{
 			invitedClient = (*it);
 			break;
@@ -893,25 +914,24 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	
 	if (!invitedClient)
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 401 " + cl->getNick() + " " + clientNick + " :No such nick\r\n");
+		sendMessageToClient(cl->getFd(), ":42_IRC 401 " + cl->getNick() + " " + invitedNick + " :No such nick\r\n");
 		return;
 	}
 
 	// Checks if the client is already in the channel
 	if (!channel->isNewClient(invitedClient->getFd()))
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 443 " + cl->getNick() + " " + channelName + " :Client is already in the channel\r\n");
+		sendMessageToClient(cl->getFd(), ":42_IRC 443 " + cl->getNick() + " " + invitedNick + " " + channelName + " :is already on channel\r\n");
 		return;
 	}
 
 	// Add the client to the channel invited clients list
 	channel->inviteClient(invitedClient);
 
-	std::string inviteMessage = ":42_IRC " + cl->getNick() + " INVITE " + invitedClient->getNick() + " :" + channelName + "\r\n";
-	sendMessageToClient(invitedClient->getFd(), inviteMessage);
-
-	std::string confirmationMessage = ":42_IRC " + cl->getNick() + " " + cmd[0] + " " + clientNick + " :" + channelName + "\r\n";
-	sendMessageToClient(cl->getFd(), confirmationMessage);
+	std::string inviteMessage = ":42_IRC 341 " + cl->getNick() + " " + invitedClient->getNick() + " " + channelName + "\r\n";
+	sendMessageToClient(cl->getFd(), inviteMessage);
+	std::string confirmationMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + invitedClient->getNick() + " " + channelName + "\r\n";
+	sendMessageToClient(invitedClient->getFd(), confirmationMessage);
 
 	channel->listChannelInfo();
 }
@@ -974,39 +994,6 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 
 	// Confirmação de KICK para o operador
 	sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + cmd[0] + " :KICK successful\r\n");
-}
-
-// for debugging
-void Server::LCI(std::vector<std::string> cmd, Client* cl)
-{
-	if (cmd.size() < 2)
-	{
-		// No channel specified
-		sendMessageToClient(cl->getFd(), "Syntax: LCI #channel{,<#ch1>,<#ch2>,...}\r\n");
-		return;
-	}
-
-	std::vector<std::string> channels = split(cmd[1], ",");
-	std::vector<std::string>::iterator it;
-	
-	for (it = channels.begin(); it != channels.end(); ++it)
-	{
-		if ((*it)[0] != '#')
-		{
-			// Invalid channel name
-			sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + *it + " :No such channel\r\n");
-			continue;
-		}
-
-		Channel* channel = getChannel(*it);
-		if (!channel)
-		{
-			// Channel does not exist
-			sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + *it + " :No such channel\r\n");
-			continue;
-		}
-		channel->listChannelInfo();
-	}
 }
 
 void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
@@ -1075,9 +1062,57 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	channel->listChannelInfo();
 }
 
+Channel* Server::getChannel(const std::string& name)
+{
+	std::map<std::string, Channel*>::iterator it = _channels.find(name);
+	if (it != _channels.end())
+		return (it->second);
+	return (NULL);
+}
+
+// for debugging
+void Server::LCI(std::vector<std::string> cmd, Client* cl)
+{
+	if (cmd.size() < 2)
+	{
+		// No channel specified
+		sendMessageToClient(cl->getFd(), "Syntax: LCI #channel{,<#ch1>,<#ch2>,...}\r\n");
+		return;
+	}
+
+	std::vector<std::string> channels = split(cmd[1], ",");
+	std::vector<std::string>::iterator it;
+	
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)[0] != '#')
+		{
+			// Invalid channel name
+			sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + *it + " :No such channel\r\n");
+			continue;
+		}
+
+		Channel* channel = getChannel(*it);
+		if (!channel)
+		{
+			// Channel does not exist
+			sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + *it + " :No such channel\r\n");
+			continue;
+		}
+		channel->listChannelInfo();
+	}
+}
 
 void Server::clearChannels()
 {
 	for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		delete it->second;
+}
+
+bool Server::isChannelExist(std::string channelName)
+{
+	if (_channels.find(channelName) != _channels.end())
+		return (true);
+	else
+		return (false);
 }
