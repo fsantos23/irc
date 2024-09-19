@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 16:13:21 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/19 11:28:45 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ class Server
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
 		void mainCommands(std::vector<std::string> str, Client *cl);
-		void sendMessageClient(int client_fd, const std::string& nickname, int error_code, const std::string& message);
+		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
