@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 11:28:45 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/19 17:43:09 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,8 +67,8 @@ class Server
 // PFV		
 //		bool isNickInUse(const std::string& nick) const;
 // PFV
-//		void closeChannels();
-//		void closeClients();
+		void closeChannels();
+		void closeClients();
 		
 		//commands
 		bool QUIT(Client *cl, std::vector<std::string> str);

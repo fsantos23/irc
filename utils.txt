@@ -1,19 +1,23 @@
-NICK pedro
+NICK c4
 PASS 123
 USER correia 0 0 :pcc
 JOIN #1
 
 
-NICK joao
+NICK c5
 PASS 123
 USER viega 0 0 :pcc2
 JOIN #1
 
 
-NICK marco
+NICK c6
 PASS 123
 USER mar 0 0 :mcc
 
+
+NICK c7
+PASS 123
+USER an 0 0 :aa
 
 LISTINFO
 PRIVMSG
@@ -30,3 +34,18 @@ TOPIC
 5-> e possivel mandar PRIVMSG para um canal que nao faz parte??
 6-> criar um canal fazer  o comando PART e o canal fica sem ninguem, depois outro cliente juntar-se a esse canal ele devia tornar-se o operador??
 7-> o comando PART tem mensagem de saida e se sim que recebem
+
+8-> QUIT: no operador voltar a entar no canal com o mesmo nome
+9-> INVITE: ERR_NOTONCHANNEL (442): Você não pode convidar um usuário para um canal no qual você não está presente.
+10-> KICK: ERR_CHANOPRIVSNEEDED (482 ou 403): Esse erro ocorre se o usuário que tenta usar o comando não for operador do canal.
+11-> KICK verificar server.cpp linha 977
+12-> KICK ver mensagens opcionais
+13-> KICK ver mensagens que o cliente foi expulso
+14-> KICK ERR_NOTONCHANNEL (442): Se o operador tentar expulsar um usuário que não está no canal, o servidor retornará este erro. expulsa mesmo nao estando no canal
+15-> KICK 42_IRC 403 pedro4 KICK :KICK successful esta correto??
+16-> TOPIC RPL_NOTOPIC (331): O servidor retorna isso se o canal não tiver um tópico definido.
+17-> MODE +t so o operador pode mudar o topic mas todos podem consultar?
+18-> MODE +k quando tenta entrar num canal com pass so com estge comando "JOIN #1" da leaks
+
+
+

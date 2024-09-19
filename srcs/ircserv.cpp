@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ircserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pveiga-c <pveiga-c@student.42.fr>          +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/12 17:37:50 by pveiga-c         ###   ########.fr       */
+/*   Updated: 2024/09/19 17:44:25 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,9 +48,10 @@ int main(int argc, char **argv)
 	catch (const std::exception &e)
 	{
 		std::cout << std::endl << RED << "Error: " << e.what() << WHI << std::endl;
-		server.clearChannels();
+		server.closeClients();
+		server.closeChannels();
 		server.closeFds();
-		return 1;
+		return (-1);
 	}
 
 	return (0);

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 12:56:14 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/19 17:46:13 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,20 +19,15 @@ Server::Server(int port, const std::string password) : _port(port), _password(pa
 
 Server::~Server()
 {
-	/* closeFds(); //close all fds after server closes
-	closeChannels(); //close all channels after server closes
-	closeClients(); //close all clients after server closes */
 }
-
-bool Server::_signal = true;
 
 void Server::initServer()
 {
 	serSocket();
 
 	std::cout << GRE << "Server Running and listening on port " << _port << std::endl << "Waiting for connections..." << WHI << std::endl;
-	_signal = true;
-	while (_signal)
+
+	while (true)
 	{
 		signal(SIGINT, handleSignal);
 		signal(SIGQUIT, handleSignal);
@@ -60,8 +55,8 @@ void Server::initServer()
 		}
 	}
 	/* closeClients(); */
-	clearChannels();
-	closeFds();
+//	clearChannels();
+//	closeFds();
 }
 
 void Server::serSocket()
@@ -94,11 +89,13 @@ void Server::serSocket()
 }
 
 void Server::closeFds() {
-    for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); ++it) {
-        if (it->fd >= 0) {
-            close(it->fd);
-        }
-    }
+	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); ++it)
+	{
+		if (it->fd >= 0)
+		{
+			close(it->fd);
+		}
+	}
 }
 
 /*
@@ -118,6 +115,24 @@ void Server::handleSignal(int signum)
 {
 	(void)signum;
 	throw(std::runtime_error("Server shuting down"));
+}
+
+void Server::closeChannels()
+{
+	
+	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete it->second; // Libere a memória alocada para o canal
+	_channels.clear(); // Limpe o mapa de canais
+}
+
+void Server::closeClients()
+{
+	for (std::vector<Client*>::iterator it = _cl.begin(); it != _cl.end(); ++it)
+	{
+		close((*it)->getFd());
+		delete *it;
+	}
+	_cl.clear();
 }
 
 /* void Server::closeChannels()
@@ -166,9 +181,10 @@ void Server::acceptNewClient()
 }
 
 // PFV
-/*
-void Server::clearClient(int fd)
+
+/* void Server::clearClient(int fd, std::string msg)
 {
+	(void)msg;
 	// Check if the client is in any channel
 	for (std::map<std::string, Channel*>::iterator chan_it = _channels.begin(); chan_it != _channels.end(); ++chan_it)
 	{
@@ -186,13 +202,15 @@ void Server::clearClient(int fd)
 			channel->forceOperator();
 		}
 	}
-	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end();)
+	for (std::vector<Client*>::iterator it = _cl.begin(); it != _cl.end();)
 	{
 		// Check if the client is in the Server client list
-		if (it->getFd() == fd)
+		if ((*it)->getFd() == fd)
 		{
 			// Close the client socket
 			close(fd);
+			//PCC learks no ^c num canal
+			delete *it;
 			// Remove from the client list
 			//_cl.erase(it);
 			it = _cl.erase(it);
@@ -253,8 +271,9 @@ void Server::clearClient(int fd, std::string msg)
                     ++poll_it;
             }
 			close(fd);
-            _cl.erase(it);
+			//PCC troquei o delete com o _cl.erase para resolver o problema de learks no ^c num canal
             delete *it;
+            _cl.erase(it);
             break;
         }
     }
@@ -869,6 +888,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 	channel->listChannelInfo();
 }
 
+
 void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 {
 	if (cmd.size() < 3)
@@ -1112,11 +1132,11 @@ void Server::LCI(std::vector<std::string> cmd, Client* cl)
 	}
 }
 
-void Server::clearChannels()
+/* void Server::clearChannels()
 {
 	for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		delete it->second;
-}
+} */
 
 bool Server::isChannelExist(std::string channelName)
 {
