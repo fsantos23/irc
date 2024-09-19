@@ -1,7 +1,17 @@
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ircserv.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/19 09:00:52 by correia          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-//PCC
+#include "../includes/Server.hpp"
+
 bool	invalid_arguments(int argc, char *argv[])
 {
 	if (argc != 3) {
@@ -23,21 +33,25 @@ bool	invalid_arguments(int argc, char *argv[])
 	}
 	return (0);
 }
+
 //PCC
 int main(int argc, char **argv)
 {
 
 	if (invalid_arguments(argc, argv))
 		return (-1);
-
+	Server server(atoi(argv[1]), std::string(argv[2]));
 	try
 	{
-		Server server = Server(atoi(argv[1]), std::string(argv[2]));
 		server.initServer();
 	}
-	catch(std::exception &e) {
-		std::cerr << e.what() << std::endl;
-		exit(-1);
+	catch (const std::exception &e)
+	{
+		std::cout << std::endl << RED << "Error: " << e.what() << WHI << std::endl;
+		server.closeClients();
+		server.closeChannels();
+		server.closeFds();
+		return (-1);
 	}
 
 	return (0);

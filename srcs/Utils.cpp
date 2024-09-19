@@ -1,10 +1,16 @@
-#include "../includes/utils.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Utils.cpp                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/09/12 10:50:53 by pviegas           #+#    #+#             */
+/*   Updated: 2024/09/13 10:16:47 by paulo            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-void sendColoredMessage(int client_fd, const std::string& message, const std::string& colorCode)
-{
-    std::string coloredMessage = colorCode + message + "\033[0m";
-    send(client_fd, coloredMessage.c_str(), coloredMessage.length(), 0);
-}
+#include "../includes/Utils.hpp"
 
 void print_tokens(std::vector<std::string> str)
 {
@@ -28,7 +34,6 @@ void sendMessageToClient(int client_fd, const std::string& message)
 
 std::vector<std::string>	split(std::string str, std::string delimiter)
 {
-	std::cout << GRE << str << WHI << std::endl;
 	std::vector<std::string> tokens;
 	size_t pos = 0;
 
@@ -59,9 +64,13 @@ std::vector<std::string>	split(std::string str, std::string delimiter)
 			str.clear();
 		}
 	}
-	
-	// PFV
-	print_tokens(tokens);
-	
+
 	return (tokens);
+}
+
+std::string toLowerCase(const std::string& str)
+{
+	std::string lowerStr = str;
+	std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+	return (lowerStr);
 }

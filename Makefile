@@ -1,55 +1,83 @@
-SRCS		=	./srcs/ircserv.cpp ./srcs/Server.cpp ./srcs/Client.cpp ./srcs/utils.cpp ./srcs/Channel.cpp
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: correia <correia@student.42.fr>            +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
+#    Updated: 2024/09/16 09:15:35 by correia          ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-OBJS		= $(SRCS:.cpp=.o)
+# Color variables
+BLACK   = \033[1;30m
+RED		= \033[1;31m
+GREEN	= \033[1;32m
+YELLOW	= \033[1;33m
+BLUE	= \033[1;34m
+PURPLE  = \033[1;35m
+CYAN    = \033[1;36m
+WHITE	= \033[1;37m
+RESET 	= \033[0m
 
-NAME		=	ircserv
+# Executable name
+NAME = ircserv
 
-CPP			=	c++
+# Compiler options
+CXX			= c++
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 #-fsanitize=address -g3
+INCLUDES	= -I ./include
 
-CPPFLAGS		=	-Wall -Wextra -Werror -std=c++98 -g #-fsanitize=address
+# Paths
+SRC_DIR = srcs/
+OBJ_DIR = objs/
 
-RM			=	rm -rf
+# Files
+SRC_FILES =	ircserv.cpp \
+			Server.cpp \
+			Client.cpp \
+			Channel.cpp \
+			Utils.cpp
 
-INC			=	-Iincludes -I/usr/include
+OBJS = $(addprefix $(OBJ_DIR), $(SRC_FILES:.cpp=.o))
 
-# /* ~~~~~~~ Colors ~~~~~~~ */
-BLACK:="\033[1;30m"
-RED:="\033[1;31m"
-GREEN:="\033[1;32m"
-PURPLE:="\033[1;35m"
-CYAN:="\033[1;36m"
-WHITE:="\033[1;37m"
-EOC:="\033[0;0m"
+# Compile object files
+$(OBJ_DIR)%.o: $(SRC_DIR)%.cpp
+	@clear
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDES)
 
-
+# Default target
 all: $(NAME)
 
-%.o: %.cpp
-	$(CPP) $(CPPFLAGS) $(INC) -c $< -o $@
+# Link executable
+${NAME}: $(OBJS)
+	@echo "\n$(BLUE) [Compiling] $(NAME)$(RESET)\n"
+	@$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+	@echo "$(GREEN) [Success] $(NAME) created.$(RESET)\n\n"
 
-$(NAME): $(OBJS)
-	$(CPP) $(OBJS) $(CPPFLAGS) $(INC) -o $(NAME)
-	@echo $(GREEN) "[Ex compiled!]" $(EOC)
-
+# Clean object files
 clean:
-	@echo $(PURPLE) "[🧹Cleaning...🧹]" $(EOC)
-	$(RM) $(OBJS)
+	@clear
+	@rm -rf $(OBJS)
+	@echo "\n$(RED) [Deleting] .o files ... (deleted)$(RESET)\n\n"
 
+# Clean all files
 fclean: clean
-	@echo $(PURPLE) "[🧹FCleaning...🧹]" $(EOC)
-	$(RM) $(NAME)
-	$(RM) *.out
-	@echo $(GREEN) "[All cleaned!]" $(EOC)
+	@rm -rf $(NAME)
+	@echo "$(GREEN) [Success] $(NAME) files ... (deleted)$(RESET)\n\n"
 
+# Rebuild
 re: fclean all
 
-run: fclean all
+# Run executable
+run: all
 	@clear
 	./$(NAME) 8090 123
 
-
 # valgrind
 val: fclean all
-	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) 8080 123
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --track-fds=yes ./$(NAME) 8090 123
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re run val
