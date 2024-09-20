@@ -45,7 +45,7 @@ TOPIC
 15-> KICK 42_IRC 403 pedro4 KICK :KICK successful esta correto??
 16-> TOPIC RPL_NOTOPIC (331): O servidor retorna isso se o canal não tiver um tópico definido.
 17-> MODE +t so o operador pode mudar o topic mas todos podem consultar?
-18-> MODE +k quando tenta entrar num canal com pass so com estge comando "JOIN #1" da leaks
+1+
 
 
 

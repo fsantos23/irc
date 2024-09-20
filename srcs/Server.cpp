@@ -6,7 +6,7 @@
 /*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 09:58:35 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/20 17:15:57 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -559,13 +559,12 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
 	// Check if there are enough parameters for the JOIN command.
-	Channel* channel = getChannel(cmd[1]);
-	if (channel && cmd.size() == 2 && channel->getKey().empty())
+	/* if (cmd.size() == 2 && !channel->getKey().empty())
 	{
-		std::string errorMessage = ":42_IRC 475 " + cl->getNick() + " JOIN :Cannot join channel (+k)";
+		std::string errorMessage = ":42_IRC 475 " + cl->getNick() + " JOIN :Cannot join channel (+k)\r\n";
 		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
 		return;
-	}
+	} */
 	if (cmd.size() < 2)
 	{
 		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " JOIN :Not enough parameters\r\n";
@@ -599,7 +598,12 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 			sendMessageClient(cl->getFd(), cl->getNick(), 473, *it + ":Cannot join channel (+i)");
 			continue;
 		}
-
+		//check if the channel has a key and if the client has the key
+		if(channel->hasKey() && key_it == keypass.end())
+		{
+			sendMessageClient(cl->getFd(), cl->getNick(), 475, *it + ":Cannot join channel (+k)");
+			continue;
+		}
 		// Validate the channel key if necessary.
 		if (channel->hasKey() && !channel->checkKey(*key_it))
 		{
