@@ -6,7 +6,7 @@
 /*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 10:18:03 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/20 09:58:35 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,8 +276,38 @@ void Server::handleClientMessage(int client_fd)
 		return;
 	}
 	buffer[bytes_received] = '\0';
+	
+	//PCC
+	_clientBuffers[client_fd] += buffer;
 
-	std::istringstream stream(buffer);
+	std::string& clientBuffer = _clientBuffers[client_fd];
+	size_t pos;
+	
+	while ((pos = clientBuffer.find('\n')) != std::string::npos)
+	{
+		std::string command = clientBuffer.substr(0, pos);
+		clientBuffer.erase(0, pos + 1);
+
+		if (!command.empty() && command[command.size() - 1] == '\r')
+		{
+			command.erase(command.size() - 1);
+		}
+
+		if (!command.empty())
+		{
+			std::vector<std::string> commandParts;
+			std::istringstream lineStream(command);
+			std::string part;
+
+			while (lineStream >> part)
+			{
+				commandParts.push_back(part);
+			}
+
+			handleInput(commandParts, client_fd);
+		}
+	}
+	/* std::istringstream stream(buffer);
 	std::string line;
 
 	// Read each line separated by "\r\n"
@@ -301,7 +331,7 @@ void Server::handleClientMessage(int client_fd)
 			handleInput(commandParts, client_fd);
 		}
 	}
-
+ */
 }
 
 void Server::handleInput(std::vector<std::string> str, int client_fd)
@@ -529,6 +559,13 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
 	// Check if there are enough parameters for the JOIN command.
+	Channel* channel = getChannel(cmd[1]);
+	if (channel && cmd.size() == 2 && channel->getKey().empty())
+	{
+		std::string errorMessage = ":42_IRC 475 " + cl->getNick() + " JOIN :Cannot join channel (+k)";
+		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
+		return;
+	}
 	if (cmd.size() < 2)
 	{
 		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " JOIN :Not enough parameters\r\n";

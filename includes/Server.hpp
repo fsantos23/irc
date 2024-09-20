@@ -6,7 +6,7 @@
 /*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 08:57:55 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/20 09:13:52 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ class Server
 		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
+		std::map<int, std::string>		_clientBuffers; // Buffer para armazenar dados recebidos de cada cliente
+
 
 	public:
 		Server(int port, const std::string password);
@@ -69,6 +71,7 @@ class Server
 // PFV
 		void closeChannels();
 		void closeClients();
+		
 		
 		//commands
 		bool QUIT(Client *cl, std::vector<std::string> str);
