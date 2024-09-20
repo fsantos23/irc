@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
+/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 13:45:00 by fsantos2         ###   ########.fr       */
+/*   Updated: 2024/09/20 17:15:57 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,6 @@ Server::Server(int port, const std::string password) : _port(port), _password(pa
 
 Server::~Server()
 {
-	/* closeFds(); //close all fds after server closes
-	closeChannels(); //close all channels after server closes
-	closeClients(); //close all clients after server closes */
 }
 
 bool Server::_signal = true;
@@ -31,8 +28,8 @@ void Server::initServer()
 	serSocket();
 
 	std::cout << GRE << "Server Running and listening on port " << _port << std::endl << "Waiting for connections..." << WHI << std::endl;
-	_signal = true;
-	while (_signal)
+
+	while (true)
 	{
 		signal(SIGINT, handleSignal);
 		signal(SIGQUIT, handleSignal);
@@ -60,7 +57,7 @@ void Server::initServer()
 		}
 	}
 	/* closeClients(); */
-	clearChannels();
+	closeChannels();
 	closeFds();
 }
 
@@ -94,11 +91,13 @@ void Server::serSocket()
 }
 
 void Server::closeFds() {
-    for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); ++it) {
-        if (it->fd >= 0) {
-            close(it->fd);
-        }
-    }
+	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); ++it)
+	{
+		if (it->fd >= 0)
+		{
+			close(it->fd);
+		}
+	}
 }
 
 /*
@@ -118,6 +117,23 @@ void Server::handleSignal(int signum)
 {
 	(void)signum;
 	throw(std::runtime_error("Server shuting down"));
+}
+
+void Server::closeChannels()
+{
+	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete it->second; // Libere a memória alocada para o canal
+	_channels.clear(); // Limpe o mapa de canais
+}
+
+void Server::closeClients()
+{
+	for (std::vector<Client*>::iterator it = _cl.begin(); it != _cl.end(); ++it)
+	{
+		close((*it)->getFd());
+		delete *it;
+	}
+	_cl.clear();
 }
 
 /* void Server::closeChannels()
@@ -166,9 +182,10 @@ void Server::acceptNewClient()
 }
 
 // PFV
-/*
-void Server::clearClient(int fd)
+
+/* void Server::clearClient(int fd, std::string msg)
 {
+	(void)msg;
 	// Check if the client is in any channel
 	for (std::map<std::string, Channel*>::iterator chan_it = _channels.begin(); chan_it != _channels.end(); ++chan_it)
 	{
@@ -186,13 +203,15 @@ void Server::clearClient(int fd)
 			channel->forceOperator();
 		}
 	}
-	for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end();)
+	for (std::vector<Client*>::iterator it = _cl.begin(); it != _cl.end();)
 	{
 		// Check if the client is in the Server client list
-		if (it->getFd() == fd)
+		if ((*it)->getFd() == fd)
 		{
 			// Close the client socket
 			close(fd);
+			//PCC learks no ^c num canal
+			delete *it;
 			// Remove from the client list
 			//_cl.erase(it);
 			it = _cl.erase(it);
@@ -213,8 +232,8 @@ void Server::clearClient(int fd)
 			++it;  // Continua iterando
 		}
 	}
-}
-*/
+} */
+
 
 void Server::clearClient(int fd, std::string msg)
 {
@@ -253,8 +272,9 @@ void Server::clearClient(int fd, std::string msg)
                     ++poll_it;
             }
 			close(fd);
-            _cl.erase(it);
+			//PCC troquei o delete com o _cl.erase para resolver o problema de learks no ^c num canal
             delete *it;
+            _cl.erase(it);
             break;
         }
     }
@@ -277,8 +297,38 @@ void Server::handleClientMessage(int client_fd)
 		return;
 	}
 	buffer[bytes_received] = '\0';
+	
+	//PCC
+	_clientBuffers[client_fd] += buffer;
 
-	std::istringstream stream(buffer);
+	std::string& clientBuffer = _clientBuffers[client_fd];
+	size_t pos;
+	
+	while ((pos = clientBuffer.find('\n')) != std::string::npos)
+	{
+		std::string command = clientBuffer.substr(0, pos);
+		clientBuffer.erase(0, pos + 1);
+
+		if (!command.empty() && command[command.size() - 1] == '\r')
+		{
+			command.erase(command.size() - 1);
+		}
+
+		if (!command.empty())
+		{
+			std::vector<std::string> commandParts;
+			std::istringstream lineStream(command);
+			std::string part;
+
+			while (lineStream >> part)
+			{
+				commandParts.push_back(part);
+			}
+
+			handleInput(commandParts, client_fd);
+		}
+	}
+	/* std::istringstream stream(buffer);
 	std::string line;
 
 	// Read each line separated by "\r\n"
@@ -302,7 +352,7 @@ void Server::handleClientMessage(int client_fd)
 			handleInput(commandParts, client_fd);
 		}
 	}
-
+ */
 }
 
 void Server::handleInput(std::vector<std::string> str, int client_fd)
@@ -530,6 +580,12 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
 	// Check if there are enough parameters for the JOIN command.
+	/* if (cmd.size() == 2 && !channel->getKey().empty())
+	{
+		std::string errorMessage = ":42_IRC 475 " + cl->getNick() + " JOIN :Cannot join channel (+k)\r\n";
+		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
+		return;
+	} */
 	if (cmd.size() < 2)
 	{
 // PFV
@@ -562,14 +618,19 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		// Check if the channel is invite-only and if the client is allowed to join.
 		if (channel->isInviteOnly() && !channel->isInvited(cl))
 		{
-			sendError(cl->getFd(), cl->getNick(), 473, *it + ":Cannot join channel (+i)");
+			sendError(cl->getFd(), cl->getNick(), 473, *it + " :Cannot join channel (+i)");
 			continue;
 		}
-
+		//check if the channel has a key and if the client has the key
+		if(channel->hasKey() && key_it == keypass.end())
+		{
+			sendError(cl->getFd(), cl->getNick(), 475, *it + " :Cannot join channel (+k)");
+			continue;
+		}
 		// Validate the channel key if necessary.
 		if (channel->hasKey() && !channel->checkKey(*key_it))
 		{
-			sendError(cl->getFd(), cl->getNick(), 475, *it + ":Cannot join channel (+k)");
+			sendError(cl->getFd(), cl->getNick(), 475, *it + " :Cannot join channel (+k)");
 			continue;
 		}
 
@@ -580,7 +641,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		// Check if the channel has a user limit and if it has been reached.
 		if (channel->hasUserLimit() && channel->countClients() >= channel->getUserLimit())
 		{
-			sendError(cl->getFd(), cl->getNick(), 471, *it + ":Cannot join channel (+l)");
+			sendError(cl->getFd(), cl->getNick(), 471, *it + " :Cannot join channel (+l)");
 			continue;
 		}
 		
@@ -704,7 +765,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 						msgb += "l";
 						aux = 1;
 						std::stringstream ss;
-						ss << it->second->getUserLimit();
+						ss << it->second->getUserLimit();  // Converta o int para string
 						info += ss.str() + " ";
 					}
 					if(!it->second->getKey().empty())
@@ -868,6 +929,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 	// For debugging purposes
 	channel->listChannelInfo();
 }
+
 
 void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 {
@@ -1035,11 +1097,11 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	}
 
 	// PFV -> Decidir se um cliente que nao esta no canal pode modificar o topico (afterNet pode)
-	/* if (!channel->getClientByFd(cl->getFd()))
+	if (!channel->getClientByFd(cl->getFd()))
 	{
 		sendError(cl->getFd(), cl->getNick(), 442, channelName + " :You're not on that channel");
 		return;
-	} */
+	}
 
 	if (cmd.size() == 2)
 	{
@@ -1112,11 +1174,11 @@ void Server::LCI(std::vector<std::string> cmd, Client* cl)
 	}
 }
 
-void Server::clearChannels()
+/* void Server::clearChannels()
 {
 	for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		delete it->second;
-}
+} */
 
 bool Server::isChannelExist(std::string channelName)
 {

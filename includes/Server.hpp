@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 11:28:45 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/20 17:24:20 by fsantos2         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ class Server
 		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
+		std::map<int, std::string>		_clientBuffers; // Buffer para armazenar dados recebidos de cada cliente
+
 
 	public:
 		Server(int port, const std::string password);
@@ -63,12 +65,13 @@ class Server
 		Channel* getChannel(const std::string& name);
 		void checkNick(std::string str, Client *cl);
 		void checkUser(std::vector<std::string> str, Client *cl);
-		void clearChannels();
+		/* void clearChannels(); */
 // PFV		
 //		bool isNickInUse(const std::string& nick) const;
 // PFV
-//		void closeChannels();
-//		void closeClients();
+		void closeChannels();
+		void closeClients();
+		
 		
 		//commands
 		bool QUIT(Client *cl, std::vector<std::string> str);

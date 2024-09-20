@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 11:35:39 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/20 17:25:20 by fsantos2         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -264,6 +264,7 @@ bool Channel::checkKey(const std::string& key)
 
 void Channel::sendMessageChannel(std::string msg)
 {
+	
 	std::cout << "Send message to Channel: " << _name << std::endl;
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
