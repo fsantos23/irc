@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
+/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 12:56:14 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/20 13:45:00 by fsantos2         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -383,7 +383,7 @@ void Server::checkNick(std::string str, Client *cl)
 	{
 		if (toLowerCase((*it)->getNick()) == lowerNick)
 		{
-			//falta enviar mensagem a dizer que o nick ja esta a ser usado
+			sendError(cl->getFd(), cl->getNick(), 433, str + " :Nickname is already in use");
 			return ;
 		}
 	}
@@ -1030,16 +1030,16 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	// Check if mode +t (only ops can set the topic) is enabled
 	if (channel->isTopicRestricted() && !channel->isOperator(cl))
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 482 " + cl->getNick() + " " + channelName + " :You're not channel operator\r\n");
+		sendError(cl->getFd(), cl->getNick(), 482, channelName + " :You're not channel operator");
 		return;
 	}
 
 	// PFV -> Decidir se um cliente que nao esta no canal pode modificar o topico (afterNet pode)
-	if (!channel->getClientByFd(cl->getFd()))
+	/* if (!channel->getClientByFd(cl->getFd()))
 	{
 		sendError(cl->getFd(), cl->getNick(), 442, channelName + " :You're not on that channel");
 		return;
-	}
+	} */
 
 	if (cmd.size() == 2)
 	{
@@ -1065,7 +1065,7 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	}
 
 	channel->setTopic(newTopic);
-	sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :Topic changed to '" + newTopic + "'\r\n");
+	sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + newTopic + "\r\n");
 	channel->broadcast(cl, ":" + cl->getNick() + " TOPIC " + channelName + " :" + newTopic + "\r\n");
 
 	channel->listChannelInfo();
