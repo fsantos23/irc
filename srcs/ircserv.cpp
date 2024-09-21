@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ircserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 09:00:52 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/21 11:49:01 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ bool	invalid_arguments(int argc, char *argv[])
 	return (0);
 }
 
-//PCC
 int main(int argc, char **argv)
 {
 

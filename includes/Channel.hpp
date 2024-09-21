@@ -6,7 +6,7 @@
 /*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 20:16:14 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/21 10:58:07 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ class Channel
 		std::string getTopic() const;
 		void setTopicRestricted(bool value);
 		bool isTopicRestricted() const;
+		void clearChannel();
 
 		// Client management
 		bool isNewClient(int fd);

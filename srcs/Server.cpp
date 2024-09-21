@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 17:15:57 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/21 11:51:36 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -163,8 +163,6 @@ void Server::acceptNewClient()
 		throw(std::runtime_error("Connecting client fail"));
 
 	Client *newClient = new Client;
-	// PFV
-//	newClient.setIp(inet_ntoa(client_addr.sin_addr));
 	newClient->setIp(inet_ntoa(client_addr.sin_addr));
 
 	newClient->setFd(client_sock);
@@ -181,106 +179,55 @@ void Server::acceptNewClient()
 	_sockcl++;
 }
 
-// PFV
-
-/* void Server::clearClient(int fd, std::string msg)
+void Server::clearClient(int fd, std::string msg)
 {
-	(void)msg;
-	// Check if the client is in any channel
+	// Check if the client is in any channel and remove it
 	for (std::map<std::string, Channel*>::iterator chan_it = _channels.begin(); chan_it != _channels.end(); ++chan_it)
 	{
 		Channel* channel = chan_it->second;
-
-		// Check if the client is in the channel
 		Client* client = channel->getClientByFd(fd);
 		if (client)
 		{
 			channel->removeClientOperator(fd);
+			// MSG to Server Console
 			std::cout << "Client " << fd << " removed from channel " << channel->getChannelName() << std::endl;
-		}
-		if (channel->countOperators() == 0 && channel->countClients() > 0)
-		{
-			channel->forceOperator();
+
+			// Send a message to the channel informing that the client has left
+			channel->sendMessageChannel(msg);
+
+			// Check if the channel has no operators and still has clients
+			if (channel->countOperators() == 0 && channel->countClients() > 0)
+				channel->forceOperator();
+			else if (channel->countClients() == 0)
+			{
+				channel->clearChannel();
+				delete channel;
+				_channels.erase(chan_it);
+				std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
+			}
 		}
 	}
-	for (std::vector<Client*>::iterator it = _cl.begin(); it != _cl.end();)
+	// Remove the client from the Server clients list without deleting it yet
+	for (std::vector<Client *>::iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
-		// Check if the client is in the Server client list
 		if ((*it)->getFd() == fd)
 		{
-			// Close the client socket
-			close(fd);
-			//PCC learks no ^c num canal
-			delete *it;
-			// Remove from the client list
-			//_cl.erase(it);
-			it = _cl.erase(it);
-
 			// Remove the pollfd entry for the client
-			for (std::vector<pollfd>::iterator poll_it = _pollfds.begin(); poll_it != _pollfds.end(); ++poll_it) 
+			for (std::vector<pollfd>::iterator poll_it = _pollfds.begin(); poll_it != _pollfds.end();)
 			{
-                if (poll_it->fd == fd)
-				{
-					_pollfds.erase(poll_it);
-					break;
-				}
+				if (poll_it->fd == fd)
+					// Adjust the iterator after erasure
+					poll_it = _pollfds.erase(poll_it);
+				else
+					++poll_it;
 			}
+			close(fd);
+			delete *it;
+			_cl.erase(it);
 			break;
 		}
-		else
-		{
-			++it;  // Continua iterando
-		}
 	}
-} */
-
-
-void Server::clearClient(int fd, std::string msg)
-{
-    // Check if the client is in any channel and remove it
-    for (std::map<std::string, Channel*>::iterator chan_it = _channels.begin(); chan_it != _channels.end(); ++chan_it)
-    {
-        Channel* channel = chan_it->second;
-        Client* client = channel->getClientByFd(fd);
-        if (client)
-        {
-            channel->removeClientOperator(fd);
-            // MSG to Server Console
-            std::cout << "Client " << fd << " removed from channel " << channel->getChannelName() << std::endl;
-
-            // Send a message to the channel informing that the client has left
-            channel->sendMessageChannel(msg);
-
-            // Check if the channel has no operators and still has clients
-            if (channel->countOperators() == 0 && channel->countClients() > 0)
-            {
-                channel->forceOperator();
-            }
-        }
-    }
-    // Remove the client from the Server clients list without deleting it yet
-    for (std::vector<Client *>::iterator it = _cl.begin(); it != _cl.end(); ++it)
-    {
-        if ((*it)->getFd() == fd)
-        {
-            // Remove the pollfd entry for the client
-            for (std::vector<pollfd>::iterator poll_it = _pollfds.begin(); poll_it != _pollfds.end();)
-            {
-                if (poll_it->fd == fd)
-                    poll_it = _pollfds.erase(poll_it);  // Adjust the iterator after erasure
-                else
-                    ++poll_it;
-            }
-			close(fd);
-			//PCC troquei o delete com o _cl.erase para resolver o problema de learks no ^c num canal
-            delete *it;
-            _cl.erase(it);
-            break;
-        }
-    }
 }
-
-
 
 void Server::handleClientMessage(int client_fd)
 {
@@ -511,24 +458,16 @@ bool Server::QUIT(Client *cl, std::vector<std::string> str)
 			for (size_t i = 1; i < str.size(); ++i)
 				quitMessage += str[i] + " ";
 
-	// PFV			
-	//		if (quitMessage[0] == ':')
-	//			quitMessage = quitMessage.substr(1);
-				
-	//		quitMessage = quitMessage.substr(0, quitMessage.size() - 1);
 			quitMessage += "\r\n";
 		} 
 		else
-		{
 			quitMessage += ":Client Quit\r\n";
-//			sendMessageAll(cl.getNick() + " has quit (Client disconnected)");
-		}
-//		sendMessageAll(quitMessage);
+
 		clearClient(cl->getFd(), quitMessage);
 	
-		return 1;
+		return (1);
 	}
-	return 0;
+	return (0);
 }
 
 void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
@@ -579,19 +518,9 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
-	// Check if there are enough parameters for the JOIN command.
-	/* if (cmd.size() == 2 && !channel->getKey().empty())
-	{
-		std::string errorMessage = ":42_IRC 475 " + cl->getNick() + " JOIN :Cannot join channel (+k)\r\n";
-		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
-		return;
-	} */
 	if (cmd.size() < 2)
 	{
-// PFV
-//		std::string errorMessage = ":42_IRC 461 " + cl->getNick() + " JOIN :Not enough parameters\r\n";
 		sendError(cl->getFd(), cl->getNick(), 461, " JOIN :Not enough parameters");
-//		send(cl->getFd(), errorMessage.c_str(), errorMessage.length(), 0);
 		return;
 	}
 
@@ -652,15 +581,6 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		// 1. Broadcast the JOIN message to the channel.
 		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
 		channel->sendMessageChannel(joinMessage);
-
-		//PFV
-		//isto e apenas para ajudar no debug
-		/* std::string nameList = channel->getClientList();
-		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
-		sendMessageToClient(cl->getFd(), nameReply);
-
-		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
-		sendMessageToClient(cl->getFd(), endOfNamesReply); */
 
 		if (key_it != keypass.end())
 			++key_it;
@@ -739,6 +659,12 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		{
 			channel->forceOperator();
 		}
+		else if (channel->countClients() == 0)
+		{
+			channel->clearChannel();
+			_channels.erase(*it);
+			std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
+		}
 
 		// for debugging
 		channel->listChannelInfo();
@@ -753,39 +679,33 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 		{
 			if(it->first == cmd[1])
 			{
-				if ( it->second->isOperator(cl))
+				int aux = 0;
+				std::string msga = cmd[1] + " ";
+				std::string msgb = "";
+				std::string info = " ";
+				if(it->second->getUserLimit())
 				{
-					
-					int aux = 0;
-					std::string msga = " " + cmd[1] + " ";
-					std::string msgb = "";
-					std::string info = " ";
-					if(it->second->getUserLimit())
-					{
-						msgb += "l";
-						aux = 1;
-						std::stringstream ss;
-						ss << it->second->getUserLimit();  // Converta o int para string
-						info += ss.str() + " ";
-					}
-					if(!it->second->getKey().empty())
-					{
-						msgb += "k";
-						aux = 1;
-						info += it->second->getKey() + " ";
-					}
-					if(!it->second->getTopic().empty())
-					{
-						msgb += "t";
-						aux = 1;
-					}
-					if (aux == 1)
-						msga += "+" + msgb;
-					msga += info;
-	 				sendError(cl->getFd(), cl->getNick(), 324, msga);
+					msgb += "l";
+					aux = 1;
+					std::stringstream ss;
+					ss << it->second->getUserLimit();
+					info += ss.str() + " ";
 				}
-				else
-					sendError(cl->getFd(), cl->getNick(), 482, it->second->getChannelName() + " :You're not channel operator");
+				if(!it->second->getKey().empty())
+				{
+					msgb += "k";
+					aux = 1;
+					info += it->second->getKey() + " ";
+				}
+				if(!it->second->getTopic().empty())
+				{
+					msgb += "t";
+					aux = 1;
+				}
+				if (aux == 1)
+					msga += "+" + msgb;
+				msga += info;
+ 				sendError(cl->getFd(), cl->getNick(), 324, msga);
 				return;
 			}
 		}
