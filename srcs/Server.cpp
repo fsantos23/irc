@@ -6,7 +6,7 @@
 /*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 17:15:57 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/22 20:05:12 by correia          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -623,7 +623,10 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		}
 		
 		// Add the client to the channel.
+		if(channel->countClients() == 0)
+			channel->addOperator(cl);
 		channel->addClient(cl);
+		
 		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
 
 		// 1. Broadcast the JOIN message to the channel.
