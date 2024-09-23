@@ -552,11 +552,17 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 		for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		{
 			// Check if the channel name matches the target channel in str[1]
-			if (it->first == str[1])
+			if (it->first == str[1] && it->second->getClientByName(cl->getNick()))
 			{
 				std::string message = sender + str[1] + " " + fullMessage + "\r\n";
 				it->second->broadcast(cl, message);
 				recipientFound = true;
+			}
+			else if(it->first == str[1] && !it->second->getClientByName(cl->getNick()))
+			{
+				sendError(cl->getFd(), cl->getNick(), 442, str[1] + " :You're not on that channel");
+				recipientFound = true;
+				break;
 			}
 		}
     }
@@ -692,58 +698,74 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 
 void Server::PART(std::vector<std::string> cmd, Client* cl)
 {
-	if (cmd.size() < 2)
-	{
-		// Not enough parameters
-		sendError(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
-		return;
-	}
+    if (cmd.size() < 2)
+    {
+        // Not enough parameters
+        sendError(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
+        return;
+    }
 
-	std::vector<std::string> channels = split(cmd[1], ",");
-	std::vector<std::string>::iterator it;
+    std::vector<std::string> channels = split(cmd[1], ",");
+    std::vector<std::string>::iterator it;
 
-	for (it = channels.begin(); it != channels.end(); ++it)
-	{
-		if ((*it)[0] != '#')
-		{
-			// Invalid channel name
-			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
-			continue;
-		}
+    // Optional part message
+    std::string partMessage;
+    if (cmd.size() > 2)
+    {
+        partMessage = cmd[2];
+        if (partMessage[0] == ':') // If the message starts with ':', remove it
+            partMessage.erase(0, 1);
+    }
 
-		Channel* channel = getChannel(*it);
-		if (!channel)
-		{
-			// Channel does not exist
-			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
-			continue;
-		}
+    for (it = channels.begin(); it != channels.end(); ++it)
+    {
+        if ((*it)[0] != '#')
+        {
+            // Invalid channel name
+            sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+            continue;
+        }
 
-		if (channel->isNewClient(cl->getFd()))
-		{
-			// Client is not on the channel
-			std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
-			sendError(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
-			continue;
-		}
+        Channel* channel = getChannel(*it);
+        if (!channel)
+        {
+            // Channel does not exist
+            sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+            continue;
+        }
 
-		// Broadcast a message to the channel notifying other users that the client has left
-		std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
-		channel->sendMessageChannel(message);
+        if (channel->isNewClient(cl->getFd()))
+        {
+            // Client is not on the channel
+            std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
+            sendError(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
+            continue;
+        }
 
-		// Remove the client from the channel
-		channel->removeClientOperator(cl->getFd());
-		std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
+        // Broadcast a message to the channel notifying other users that the client has left
+        std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it;
 
-		if (channel->countOperators() == 0 && channel->countClients() > 0)
-		{
-			channel->forceOperator();
-		}
+        // If there's an optional part message, include it in the broadcast
+        if (!partMessage.empty())
+            message += " :" + partMessage;
 
-		// for debugging
-		channel->listChannelInfo();
-	}
+        message += "\r\n";
+        channel->sendMessageChannel(message);
+
+        // Remove the client from the channel
+        channel->removeClientOperator(cl->getFd());
+        std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
+
+        if (channel->countOperators() == 0 && channel->countClients() > 0)
+        {
+            channel->forceOperator();
+        }
+
+        // For debugging
+        channel->listChannelInfo();
+    }
 }
+
 
 void Server::MODE(std::vector<std::string> cmd, Client* cl)
 {
@@ -1024,14 +1046,7 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 
 	// Check if Client is in the channel
 	Client* targetClient = NULL;
-	for (size_t i = 0; i < _cl.size(); ++i)
-	{
-		if (_cl[i]->getNick() == targetNick)
-		{
-			targetClient = _cl[i];
-			break;
-		}
-	}
+	targetClient = channel->getClientByName(targetNick);
 
 	if (!targetClient)
 	{
