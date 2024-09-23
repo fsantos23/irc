@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:23:15 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/23 13:48:56 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ bool Channel::isNewClient(int fd)
 	}
 	return (true);
 }
-
 
 void Channel::addClient(Client* client)
 {
@@ -230,7 +229,6 @@ void Channel::removeInvited(int cl_fd)
 		_invitedClients.erase(it);
 }
 
-
 void Channel::setKey(const std::string& key)
 {
 	_key = key;
@@ -255,7 +253,6 @@ bool Channel::checkKey(const std::string& key)
 
 void Channel::sendMessageChannel(std::string msg)
 {
-	
 	std::cout << "Send message to Channel: " << _name << std::endl;
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
