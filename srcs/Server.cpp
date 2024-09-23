@@ -207,7 +207,7 @@ void Server::clearClient(int fd, std::string msg)
 
 void Server::handleClientMessage(int client_fd)
 {
-	char buffer[512];
+	char buffer[4096];
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -330,10 +330,13 @@ void Server::checkNick(std::string str, Client *cl)
 	{
 		if (toLowerCase((*it)->getNick()) == lowerNick)
 		{
+			cl->setTemporaryNick(str);
 			sendError(cl->getFd(), cl->getNick(), 433, str + " :Nickname is already in use");
 			return ;
 		}
 	}
+	if(!cl->getTemporaryNick().empty())
+		sendMessageToClient(cl->getFd(), ":" + cl->getTemporaryNick() + "!" + cl->getUser() + "@localhost NICK :" + str + "\r\n");
 	cl->setNick(str);
 	// Msg to Server Console
 	std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
@@ -355,7 +358,7 @@ void Server::checkUser(std::vector<std::string> str, Client* cl)
 	}
 	// delete the ':' from the string
 	str[4].erase(0, 1);
-	cl->setUser(str[4]);
+	cl->setUser(str[1]);
 }
 
 void Server::mainCommands(std::vector<std::string> str, Client *cl)
@@ -370,6 +373,7 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	commandhandler["MODE"] = &Server::MODE;
 	commandhandler["KICK"] = &Server::KICK;
 	commandhandler["TOPIC"] = &Server::TOPIC;
+	commandhandler["WHO"] = &Server::WHO;
 // for debugging
 //	commandhandler["LCI"] = &Server::LCI;
 
@@ -475,6 +479,7 @@ void Server::PRIVMSG(std::vector<std::string> str, Client *cl)
 
 void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 {
+	
 	if (cmd.size() < 2)
 	{
 		sendError(cl->getFd(), cl->getNick(), 461, " JOIN :Not enough parameters");
@@ -535,16 +540,14 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		channel->addClient(cl);
 		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
 
+		/* sendError(cl->getFd(), cl->getNick(), 331, channel->getChannelName() + " :No topic is set");  */
 		// 1. Broadcast the JOIN message to the channel.
-		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
-		channel->sendMessageChannel(joinMessage);
 
-		std::string nameList = channel->getClientList();
-		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
-		sendMessageToClient(cl->getFd(), nameReply);
-
-		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
-		sendMessageToClient(cl->getFd(), endOfNamesReply);
+		// :francisco!ola@localhost JOIN #a * :realname
+		// :Mota!Pedrocasaaa@localhost JOIN #c * :realname
+		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@localhost" + " " + cmd[0] + " " + *it + " * :realname""\r\n";
+		sendMessageToClient(cl->getFd(), joinMessage);
+		channel->broadcast(cl, joinMessage);
 
 		if (key_it != keypass.end())
 			++key_it;
@@ -570,8 +573,8 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
 
 	// Send a message to the client informing them that they are the operator
-	sendError(cl->getFd(), cl->getNick(), 324, name + " +o");
-	sendError(cl->getFd(), cl->getNick(), 331, name + " :No topic is set");
+	/* sendError(cl->getFd(), cl->getNick(), 324, name + " +o");
+	sendError(cl->getFd(), cl->getNick(), 331, name + " :No topic is set"); */
 	
 	return (newChannel);
 }
@@ -896,54 +899,63 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 		return;
 	}
 
-	std::string channelName = cmd[1];
-	std::string targetNick = cmd[2];
+	std::vector<std::string> channel_get = split(cmd[1], ",");
+	std::vector<std::string> target = split(cmd[2], ",");
 	std::string reason;
-	
-	for (size_t i = 3; i < cmd.size(); ++i)
+
+	std::vector<std::string>::iterator targetNick = target.begin();
+
+	for(std::vector<std::string>::iterator channelName = channel_get.begin(); channelName != channel_get.end(); ++channelName)
 	{
-		reason += cmd[i] + " ";
+		for (size_t i = 3; i < cmd.size(); ++i)
+		{
+			reason += cmd[i] + " ";
+		}
+		
+		// Checks if the channel exists
+		Channel* channel = getChannel(*channelName);
+		if (!channel)
+		{
+			sendError(cl->getFd(), cl->getNick(), 403, *channelName + " :No such channel");
+			return;
+		}
+
+		// Check if Client is in the channel
+		Client* targetClient = NULL;
+		targetClient = channel->getClientByName(*targetNick);
+
+		if (!targetClient)
+		{
+			sendError(cl->getFd(), cl->getNick(), 401, *targetNick + " :No such nick");
+			return;
+		}
+
+		// Checks if the client is an operator in the channel
+		if (!channel->isOperator(cl))
+		{
+			sendError(cl->getFd(), cl->getNick(), 482, *channelName + " :You're not channel operator");
+			return;
+		}
+
+		// Sends a message to all clients in the channel, informing about the KICK
+		std::string kickMessage = ":" + cl->getNick() + " " + cmd[0] + " " + *channelName + " " + targetClient->getNick();
+
+		if (!reason.empty())
+			kickMessage += " " + reason;
+		kickMessage += "\r\n";
+
+		channel->sendMessageChannel(kickMessage);
+		// Remove Client from the channel
+		channel->removeClientOperator(targetClient->getFd());
+		// Remove Client from the invited list
+		channel->removeInvited(targetClient->getFd());
+
+		if (targetNick != target.end())
+			++targetNick;
+
+		reason = "";
+		channel->listChannelInfo();
 	}
-	
-	// Checks if the channel exists
-	Channel* channel = getChannel(channelName);
-	if (!channel)
-	{
-		sendError(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
-		return;
-	}
-
-	// Check if Client is in the channel
-	Client* targetClient = NULL;
-	targetClient = channel->getClientByName(targetNick);
-
-	if (!targetClient)
-	{
-		sendError(cl->getFd(), cl->getNick(), 401, targetNick + " :No such nick");
-		return;
-	}
-
-	// Checks if the client is an operator in the channel
-	if (!channel->isOperator(cl))
-	{
-		sendError(cl->getFd(), cl->getNick(), 482, channelName + " :You're not channel operator");
-		return;
-	}
-
-	// Sends a message to all clients in the channel, informing about the KICK
-	std::string kickMessage = ":" + cl->getNick() + " " + cmd[0] + " " + channelName + " " + targetClient->getNick();
-
-	if (!reason.empty())
-		kickMessage += " " + reason;
-	kickMessage += "\r\n";
-
-	channel->sendMessageChannel(kickMessage);
-	// Remove Client from the channel
-	channel->removeClientOperator(targetClient->getFd());
-	// Remove Client from the invited list
-	channel->removeInvited(targetClient->getFd());
-
-	channel->listChannelInfo();
 }
 
 void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
@@ -1059,4 +1071,24 @@ bool Server::isChannelExist(std::string channelName)
 		return (true);
 	else
 		return (false);
+}
+
+void Server::WHO(std::vector<std::string> cmd, Client* cl)
+{
+	if(cmd[1][0] == '#')
+	{
+		Channel *channel = getChannel(cmd[1]);
+		if(!channel)
+		{
+			sendError(cl->getFd(), cl->getNick(), 403, cmd[1] + " :No such channel");
+			return;
+		}
+		
+		std::string nameList = channel->getClientList();
+		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + channel->getChannelName() + " :" + nameList + "\r\n";
+		sendMessageToClient(cl->getFd(), nameReply);
+
+		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + channel->getChannelName() + " :End of /NAMES list\r\n";
+		sendMessageToClient(cl->getFd(), endOfNamesReply);
+	}
 }

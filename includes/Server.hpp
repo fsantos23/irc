@@ -78,6 +78,7 @@ class Server
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
 		void TOPIC(std::vector<std::string> cmd, Client* cl);
+		void WHO(std::vector<std::string> cmd, Client* cl);
 		
 		// for debugging
 		void LCI(std::vector<std::string> cmd, Client* cl);
