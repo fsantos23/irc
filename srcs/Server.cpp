@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:16:56 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/23 13:45:48 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,62 +56,50 @@ void Server::initServer()
 			}
 		}
 	}
-	/* closeClients(); */
 	closeChannels();
 	closeFds();
 }
 
 void Server::serSocket()
 {
-	_sockfd = socket(AF_INET, SOCK_STREAM, 0); //create socket
+	//create socket
+	_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (_sockfd == -1)
 		throw(std::runtime_error("Socket creation error"));
 	int opt = 1;
-	if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) //set rule to reuse port
+	//set rule to reuse port
+	if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
 		throw(std::runtime_error("Socket reuse rule error"));
 	
-	struct sockaddr_in server_addr; //bind type
-	server_addr.sin_family = AF_INET; //IPv4
-	server_addr.sin_addr.s_addr = INADDR_ANY; //bind to any IP address
-	server_addr.sin_port = htons(_port); //bind to port
+	struct sockaddr_in server_addr;				//bind type
+	server_addr.sin_family = AF_INET;			//IPv4
+	server_addr.sin_addr.s_addr = INADDR_ANY;	//bind to any IP address
+	server_addr.sin_port = htons(_port);		//bind to port
 
 	if(bind(_sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) //bind socket to port
 		throw(std::runtime_error("Bind failed"));
 
-	if(listen(_sockfd, SOMAXCONN) < 0) //listen for connection
+	//listen for connection
+	if(listen(_sockfd, SOMAXCONN) < 0)
 		throw(std::runtime_error("Listen failed"));
 
 
 	struct pollfd server_pollfd;
-    server_pollfd.fd = _sockfd;
-    server_pollfd.events = POLLIN;
-    server_pollfd.revents = 0;
+	server_pollfd.fd = _sockfd;
+	server_pollfd.events = POLLIN;
+	server_pollfd.revents = 0;
 	_pollfds.push_back(server_pollfd);
 }
 
-void Server::closeFds() {
+void Server::closeFds()
+{
 	for (std::vector<pollfd>::iterator it = _pollfds.begin(); it != _pollfds.end(); ++it)
 	{
 		if (it->fd >= 0)
-		{
 			close(it->fd);
-		}
 	}
 }
-
-/*
-void Server::closeFds()
-{
-	if(_sockfd != -1)
-		close(_sockfd);
-	for(int i = 0; i < _sockcl; i++)
-	{
-		if(_cl[i].getFd() != -1)
-			close(_cl[i].getFd());
-	}
-}
-*/
 
 void Server::handleSignal(int signum)
 {
@@ -122,8 +110,10 @@ void Server::handleSignal(int signum)
 void Server::closeChannels()
 {
 	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-		delete it->second; // Libere a memória alocada para o canal
-	_channels.clear(); // Limpe o mapa de canais
+		// free the memory allocated for the channel
+		delete it->second;
+	// Clean channel map
+	_channels.clear();
 }
 
 void Server::closeClients()
@@ -135,23 +125,6 @@ void Server::closeClients()
 	}
 	_cl.clear();
 }
-
-/* void Server::closeChannels()
-{
-	
-	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-		delete it->second; // Libere a memória alocada para o canal
-	_channels.clear(); // Limpe o mapa de canais
-} */
-
-/* void Server::closeClients()
-{
-    for (std::vector<Client>::iterator it = _cl.begin(); it != _cl.end(); ++it)
-    {
-        close((it)->getFd());
-    }
-    _cl.clear();
-} */
 
 void Server::acceptNewClient()
 {
@@ -166,8 +139,10 @@ void Server::acceptNewClient()
 	newClient->setIp(inet_ntoa(client_addr.sin_addr));
 
 	newClient->setFd(client_sock);
-	_cl.push_back(newClient); // add new client to vector
+	// add new client to vector
+	_cl.push_back(newClient);
 
+	// MSG to Server Console
 	std::cout << GRE << "Client connected: " << inet_ntoa(client_addr.sin_addr) << WHI << std::endl;
 
 	struct pollfd client_pollfd;
@@ -207,6 +182,7 @@ void Server::clearClient(int fd, std::string msg)
 			}
 		}
 	}
+	
 	// Remove the client from the Server clients list without deleting it yet
 	for (std::vector<Client *>::iterator it = _cl.begin(); it != _cl.end(); ++it)
 	{
@@ -231,7 +207,7 @@ void Server::clearClient(int fd, std::string msg)
 
 void Server::handleClientMessage(int client_fd)
 {
-	char buffer[1024];
+	char buffer[512];
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -245,7 +221,6 @@ void Server::handleClientMessage(int client_fd)
 	}
 	buffer[bytes_received] = '\0';
 	
-	//PCC
 	_clientBuffers[client_fd] += buffer;
 
 	std::string& clientBuffer = _clientBuffers[client_fd];
@@ -275,31 +250,6 @@ void Server::handleClientMessage(int client_fd)
 			handleInput(commandParts, client_fd);
 		}
 	}
-	/* std::istringstream stream(buffer);
-	std::string line;
-
-	// Read each line separated by "\r\n"
-	while (std::getline(stream, line)) 
-	{
-		// Remove any trailing carriage return manually
-		if (line.size() > 0 && line[line.size() - 1] == '\r')
-			line.erase(line.size() - 1);  // Remove the last character
-		if (!line.empty())
-		{
-			// Split the line into parts based on spaces
-			std::vector<std::string> commandParts;
-			std::istringstream lineStream(line);
-			std::string part;
-
-			while (lineStream >> part)
-			{
-				commandParts.push_back(part);
-			}
-			// Process the command
-			handleInput(commandParts, client_fd);
-		}
-	}
- */
 }
 
 void Server::handleInput(std::vector<std::string> str, int client_fd)
@@ -314,7 +264,7 @@ void Server::handleInput(std::vector<std::string> str, int client_fd)
 			break;
 		}
 	}
-	//ha um porblema aqui de memoria porque ele não faz delete bem do client do vector
+	
 	if(QUIT(_cl[j], str))
 		return ;
 	if(checkEntry(str, _cl[j]))
@@ -362,14 +312,14 @@ int Server::checkEntry(std::vector<std::string> str, Client *cl)
 		}
 	}
 	for (int i = 0; i < 3; i++)
-    {
-        if (user[i] == "*" || user[i].empty())
-        {
-            sendError(cl->getFd(), cl->getNick(), 451, ":You have not registered");
-            return 1;
-        }
-    }
-    return 0;
+	{
+		if (user[i] == "*" || user[i].empty())
+		{
+			sendError(cl->getFd(), cl->getNick(), 451, ":You have not registered");
+			return (1);
+		}
+	}
+	return (0);
 }
 
 void Server::checkNick(std::string str, Client *cl)
@@ -385,6 +335,7 @@ void Server::checkNick(std::string str, Client *cl)
 		}
 	}
 	cl->setNick(str);
+	// Msg to Server Console
 	std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
 }
 
@@ -419,8 +370,8 @@ void Server::mainCommands(std::vector<std::string> str, Client *cl)
 	commandhandler["MODE"] = &Server::MODE;
 	commandhandler["KICK"] = &Server::KICK;
 	commandhandler["TOPIC"] = &Server::TOPIC;
-	// for debugging
-	commandhandler["LCI"] = &Server::LCI;
+// for debugging
+//	commandhandler["LCI"] = &Server::LCI;
 
 	std::map<std::string, CommandHolder>::iterator it = commandhandler.find(str[0]);
 	if(it != commandhandler.end())
@@ -605,7 +556,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 Channel* Server::joinChannel(const std::string& name, Client *cl)
 {
 	if (isChannelExist(name))
-		return _channels[name];
+		return (_channels[name]);
 
 	// If the channel does not exist, creates a new one.
 	Channel* newChannel = new Channel(name);
@@ -637,19 +588,6 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 	std::vector<std::string> channels = split(cmd[1], ",");
 	std::vector<std::string>::iterator it;
 
-// PFV Decidir se fica a parte de mensagem opcional ou não (RFC nao tem)
-/*
-	// Optional part message
-	std::string partMessage;
-	if (cmd.size() > 2)
-	{
-		partMessage = cmd[2];
-		// If the message starts with ':', remove it
-		if (partMessage[0] == ':')
-			partMessage.erase(0, 1);
-	}
-*/
-
 	for (it = channels.begin(); it != channels.end(); ++it)
 	{
 		if ((*it)[0] != '#')
@@ -677,11 +615,6 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		// Broadcast a message to the channel notifying other users that the client has left
 		std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it;
 
-// PFV Decidir se fica a parte de mensagem opcional ou não (RFC nao tem)
-        // If there's an optional part message, include it in the broadcast
-        /* if (!partMessage.empty())
-            message += " :" + partMessage; */
-
 		message += "\r\n";
 		channel->sendMessageChannel(message);
 
@@ -704,7 +637,6 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		channel->listChannelInfo();
 	}
 }
-
 
 void Server::MODE(std::vector<std::string> cmd, Client* cl)
 {
@@ -884,7 +816,6 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 	// For debugging purposes
 	channel->listChannelInfo();
 }
-
 
 void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 {
@@ -1121,12 +1052,6 @@ void Server::LCI(std::vector<std::string> cmd, Client* cl)
 		channel->listChannelInfo();
 	}
 }
-
-/* void Server::clearChannels()
-{
-	for(std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-		delete it->second;
-} */
 
 bool Server::isChannelExist(std::string channelName)
 {

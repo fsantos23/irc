@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 10:56:02 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/23 13:23:15 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,19 +97,13 @@ void Channel::listChannelInfo() const
 	else
 	{
 		for (std::vector<int>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
-// PFV
-//		for (std::map<int, Client*>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
 		{
-			// if (isOperator(it->second))
-			// 	std::cout << "@" << it->first << " ";
-			// else
-			// 	std::cout << it->first << " ";
 			Client* client = getClientByFd(*it);
+			
 			if (client && isOperator(client))
 				std::cout << "@" << *it << " ";
 			else
 				std::cout << *it << " ";
-
 		}
 		std::cout << std::endl;
 	}
@@ -205,16 +199,6 @@ void Channel::forceOperator()
 	addOperator(firstClient);
 }
 
-// PFV
-/*
-void Channel::inviteClient(Client* cl)
-{
-	// Adds a client to the list of invited clients.
-	_invitedClients[cl->getFd()] = cl;
-	std::cout << "Client " << cl->getNick() << " has been invited to the channel." << std::endl;
-}
-*/
-
 bool Channel::inviteClient(Client* cl)
 {
 	// Check if the client is not already an operator
@@ -232,14 +216,6 @@ bool Channel::inviteClient(Client* cl)
 		return (true);
 	}
 }
-
-// PFV
-/*
-bool Channel::isInvited(Client* cl)
-{
-	return (_invitedClients.find(cl->getFd()) != _invitedClients.end());
-}
-*/
 
 bool Channel::isInvited(Client* cl) const
 {

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 10:56:18 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/23 13:22:16 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ class Channel
 		std::vector<Client*>		_clients;
 		std::vector<int>			_operators;
 		bool						_inviteOnly;
-//		std::map<int, Client *>		_invitedClients;
 		std::vector<int>			_invitedClients;
 		std::string					_key;
 		std::string					_topic;
@@ -61,11 +60,7 @@ class Channel
 		void removeOperator(int cl_fd);
 
 		// Invite management
-// PFV
-//		void inviteClient(Client* cl);
 		bool inviteClient(Client* cl);
-// PFV
-//		bool isInvited(Client* cl);
 		bool isInvited(Client* cl) const;
 		void removeInvited(int cl_fd);
 
