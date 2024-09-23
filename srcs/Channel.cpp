@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: fsantos2 <fsantos2@student.42.fr>          +#+  +:+       +#+        */
+/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 17:25:20 by fsantos2         ###   ########.fr       */
+/*   Updated: 2024/09/21 11:50:29 by paulo            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,19 +26,6 @@ std::string	&Channel::getChannelName()
 	return (this->_name);
 }
 
-// PFV
-/*
-bool Channel::isNewClient(int fd)
-{
-	for (std::vector<Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-        if ((*it)->getFd() == fd)
-            return false;
-    }
-    return true;
-}
-*/
-
 bool Channel::isNewClient(int fd)
 {
 	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -55,24 +42,6 @@ void Channel::addClient(Client* client)
 	_clients.push_back(client);
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
-// PFV
-/*
-void Channel::removeClientOperator(int cl_fd)
-{
-    // Remove client from the _clients map
-    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if ((*it)->getFd() == cl_fd) 
-		{
-            _clients.erase(it);  // Remove from vector
-            break;  // Exit loop after removal
-        }
-    }
-	// Remove the client from the list of operators
-	std::vector<int>::iterator it_op = std::find(_operators.begin(), _operators.end(), cl_fd);
-	if (it_op != _operators.end())
-		_operators.erase(it_op);
-}
-*/
 
 void Channel::removeClientOperator(int cl_fd)
 {
@@ -344,8 +313,23 @@ Client* Channel::getClientByFd(int fd) const
 {
 	for (std::vector<Client*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-        if ((*it)->getFd() == fd)
-            return *it;
-    }
-    return NULL;
+		if ((*it)->getFd() == fd)
+			return *it;
+	}
+	return NULL;
+}
+
+void Channel::clearChannel()
+{
+	_clients.clear();
+	_operators.clear();
+	_invitedClients.clear();
+	_inviteOnly = false;
+	_key.clear();
+	_topic.clear();
+	_topicRestricted = false;
+	_userLimit = 0;
+
+	// Console Server MSG
+	std::cout << "Channel " << _name << " has been cleared and is ready for deletion." << std::endl;
 }
