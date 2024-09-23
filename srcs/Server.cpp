@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/21 11:51:36 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/23 13:16:56 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -588,6 +588,13 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it + "\r\n";
 		channel->sendMessageChannel(joinMessage);
 
+		std::string nameList = channel->getClientList();
+		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + *it + " :" + nameList + "\r\n";
+		sendMessageToClient(cl->getFd(), nameReply);
+
+		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + *it + " :End of /NAMES list\r\n";
+		sendMessageToClient(cl->getFd(), endOfNamesReply);
+
 		if (key_it != keypass.end())
 			++key_it;
 
@@ -603,10 +610,12 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	// If the channel does not exist, creates a new one.
 	Channel* newChannel = new Channel(name);
 	_channels[name] = newChannel;
+	// Server Console MSG
 	std::cout << "Client " << cl->getFd() << " created channel " << name << std::endl;
 
 	// Add the client as the operator of the newly created channel
 	newChannel->addOperator(cl);
+	// Server Console MSG
 	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
 
 	// Send a message to the client informing them that they are the operator
@@ -618,56 +627,68 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 
 void Server::PART(std::vector<std::string> cmd, Client* cl)
 {
-    if (cmd.size() < 2)
-    {
-        // Not enough parameters
-        sendError(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
-        return;
-    }
+	if (cmd.size() < 2)
+	{
+		// Not enough parameters
+		sendError(cl->getFd(), cl->getNick(), 461, "PART :Not enough parameters");
+		return;
+	}
 
-    std::vector<std::string> channels = split(cmd[1], ",");
-    std::vector<std::string>::iterator it;
+	std::vector<std::string> channels = split(cmd[1], ",");
+	std::vector<std::string>::iterator it;
 
-    // Optional part message
-    std::string partMessage;
-    if (cmd.size() > 2)
-    {
-        partMessage = cmd[2];
-        if (partMessage[0] == ':') // If the message starts with ':', remove it
-            partMessage.erase(0, 1);
-    }
+// PFV Decidir se fica a parte de mensagem opcional ou não (RFC nao tem)
+/*
+	// Optional part message
+	std::string partMessage;
+	if (cmd.size() > 2)
+	{
+		partMessage = cmd[2];
+		// If the message starts with ':', remove it
+		if (partMessage[0] == ':')
+			partMessage.erase(0, 1);
+	}
+*/
 
-    for (it = channels.begin(); it != channels.end(); ++it)
-    {
-        if ((*it)[0] != '#')
-        {
-            // Invalid channel name
-            sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
-            continue;
-        }
+	for (it = channels.begin(); it != channels.end(); ++it)
+	{
+		if ((*it)[0] != '#')
+		{
+			// Invalid channel name
+			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+			continue;
+		}
 
-        Channel* channel = getChannel(*it);
-        if (!channel)
-        {
-            // Channel does not exist
-            sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
-            continue;
-        }
+		Channel* channel = getChannel(*it);
+		if (!channel)
+		{
+			// Channel does not exist
+			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
+			continue;
+		}
 
-        if (channel->isNewClient(cl->getFd()))
-        {
-            // Client is not on the channel
-            std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
-            sendError(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
-            continue;
-        }
+		if (channel->isNewClient(cl->getFd()))
+		{
+			std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
+			sendError(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
+			continue;
+		}
 
-        // Broadcast a message to the channel notifying other users that the client has left
-        std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it;
+		// Broadcast a message to the channel notifying other users that the client has left
+		std::string message = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + *it;
 
+// PFV Decidir se fica a parte de mensagem opcional ou não (RFC nao tem)
         // If there's an optional part message, include it in the broadcast
         /* if (!partMessage.empty())
             message += " :" + partMessage; */
+
+		message += "\r\n";
+		channel->sendMessageChannel(message);
+
+		// Remove the client from the channel
+		channel->removeClientOperator(cl->getFd());
+		std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
+
 		if (channel->countOperators() == 0 && channel->countClients() > 0)
 		{
 			channel->forceOperator();
@@ -679,21 +700,9 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 			std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
 		}
 
-        message += "\r\n";
-        channel->sendMessageChannel(message);
-
-        // Remove the client from the channel
-        channel->removeClientOperator(cl->getFd());
-        std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
-
-        if (channel->countOperators() == 0 && channel->countClients() > 0)
-        {
-            channel->forceOperator();
-        }
-
-        // For debugging
-        channel->listChannelInfo();
-    }
+		// For debugging
+		channel->listChannelInfo();
+	}
 }
 
 
@@ -714,7 +723,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 					msgb += "l";
 					aux = 1;
 					std::stringstream ss;
-					ss << it->second->getUserLimit();
+					ss << it->second->getUserLimit();  // Converta o int para string
 					info += ss.str() + " ";
 				}
 				if(!it->second->getKey().empty())
@@ -958,8 +967,13 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 
 	std::string channelName = cmd[1];
 	std::string targetNick = cmd[2];
-	std::string reason = (cmd.size() > 3) ? cmd[3] : "";
-
+	std::string reason;
+	
+	for (size_t i = 3; i < cmd.size(); ++i)
+	{
+		reason += cmd[i] + " ";
+	}
+	
 	// Checks if the channel exists
 	Channel* channel = getChannel(channelName);
 	if (!channel)
@@ -974,7 +988,7 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 
 	if (!targetClient)
 	{
-		sendError(cl->getFd(), cl->getNick(), 401, channelName + " :No such nick");
+		sendError(cl->getFd(), cl->getNick(), 401, targetNick + " :No such nick");
 		return;
 	}
 
@@ -988,21 +1002,17 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 	// Sends a message to all clients in the channel, informing about the KICK
 	std::string kickMessage = ":" + cl->getNick() + " " + cmd[0] + " " + channelName + " " + targetClient->getNick();
 
-	if (reason.empty())
-		kickMessage += "\r\n";
-	else
-		kickMessage += " :" + reason;
+	if (!reason.empty())
+		kickMessage += " " + reason;
 	kickMessage += "\r\n";
 
 	channel->sendMessageChannel(kickMessage);
 	// Remove Client from the channel
 	channel->removeClientOperator(targetClient->getFd());
+	// Remove Client from the invited list
+	channel->removeInvited(targetClient->getFd());
 
-	// PFV
-	// Confirmação de KICK para o operador
-	// sendMessageToClient(cl->getFd(), ":42_IRC 403 " + cl->getNick() + " " + cmd[0] + " :KICK successful\r\n");
-
-	// PFV -> todo remove from invited list
+	channel->listChannelInfo();
 }
 
 void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
@@ -1014,6 +1024,13 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	}
 
 	std::string channelName = cmd[1];
+	Channel* channel = getChannel(channelName);
+
+	if (cmd.size() == 2)
+	{
+		sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		return;
+	}
 
 	if (channelName[0] != '#')
 	{
@@ -1021,30 +1038,22 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 		return;
 	}
 
-	Channel* channel = getChannel(channelName);
 	if (!channel)
 	{
 		sendError(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
 		return;
 	}
 
-	// Check if mode +t (only ops can set the topic) is enabled
+	// Check if mode +t is enabled (only operators can set the topic)
 	if (channel->isTopicRestricted() && !channel->isOperator(cl))
 	{
 		sendError(cl->getFd(), cl->getNick(), 482, channelName + " :You're not channel operator");
 		return;
 	}
 
-	// PFV -> Decidir se um cliente que nao esta no canal pode modificar o topico (afterNet pode)
 	if (!channel->getClientByFd(cl->getFd()))
 	{
 		sendError(cl->getFd(), cl->getNick(), 442, channelName + " :You're not on that channel");
-		return;
-	}
-
-	if (cmd.size() == 2)
-	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
 		return;
 	}
 
