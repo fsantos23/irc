@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:45:48 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/24 12:22:04 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,11 @@ void Server::closeFds()
 	{
 		if (it->fd >= 0)
 			close(it->fd);
+	}
+	if (_sockfd >= 0)
+	{
+		close(_sockfd);
+		_sockfd = -1;
 	}
 }
 
@@ -974,7 +979,10 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 
 	if (cmd.size() == 2)
 	{
-		sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		if (channel)
+			sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + channel->getTopic() + "\r\n");
+		else
+			sendError(cl->getFd(), cl->getNick(), 403, channelName + " :No such channel");
 		return;
 	}
 
