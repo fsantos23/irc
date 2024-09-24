@@ -665,7 +665,10 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 				{
 					msgb += "k";
 					aux = 1;
-					info += it->second->getKey() + " ";
+					if(it->second->isOperator(cl))
+						info += it->second->getKey() + " ";
+					else
+						info += '*';
 				}
 				if(!it->second->getTopic().empty())
 				{
