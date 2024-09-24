@@ -169,7 +169,7 @@ bool Channel::addOperator(Client* cl)
 	{
 		_operators.push_back(cl->getFd());
 		// Server console MSG
-		std::cout << cl->getNick() << " has been promoted to operator." << std::endl;
+		std::cout << cl->getNick() << " has been promoted to operator." << std::endl; 
 		return (true);
 	}
 }

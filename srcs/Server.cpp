@@ -180,10 +180,10 @@ void Server::clearClient(int fd, std::string msg)
 				channel->forceOperator();
 			else if (channel->countClients() == 0)
 			{
-				channel->clearChannel();
-				delete channel;
-				_channels.erase(chan_it);
 				std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
+				channel->clearChannel();
+				/* delete channel;
+				_channels.erase(chan_it); */
 			}
 		}
 	}
@@ -510,7 +510,12 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 
 		// Join or create the channel.
 		Channel* channel = joinChannel(*it, cl);
-		
+
+		if(channel->countClients() == 0 && channel->countOperators() == 0)
+		{
+			channel->addOperator(cl);
+			std::cout << "Client " << cl->getFd() << " is the operator of channel " << channel->getChannelName() << std::endl;
+		}
 		// Check if the channel is invite-only and if the client is allowed to join.
 		if (channel->isInviteOnly() && !channel->isInvited(cl))
 		{
@@ -545,11 +550,6 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		channel->addClient(cl);
 		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
 
-		/* sendError(cl->getFd(), cl->getNick(), 331, channel->getChannelName() + " :No topic is set");  */
-		// 1. Broadcast the JOIN message to the channel.
-
-		// :francisco!ola@localhost JOIN #a * :realname
-		// :Mota!Pedrocasaaa@localhost JOIN #c * :realname
 		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@localhost" + " " + cmd[0] + " " + *it + " * :realname""\r\n";
 		sendMessageToClient(cl->getFd(), joinMessage);
 		channel->broadcast(cl, joinMessage);
@@ -576,10 +576,6 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	newChannel->addOperator(cl);
 	// Server Console MSG
 	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
-
-	// Send a message to the client informing them that they are the operator
-	/* sendError(cl->getFd(), cl->getNick(), 324, name + " +o");
-	sendError(cl->getFd(), cl->getNick(), 331, name + " :No topic is set"); */
 	
 	return (newChannel);
 }
@@ -637,7 +633,7 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		else if (channel->countClients() == 0)
 		{
 			channel->clearChannel();
-			_channels.erase(*it);
+			/* _channels.erase(*it); */
 			std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
 		}
 
