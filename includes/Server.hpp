@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/20 09:13:52 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/23 13:47:24 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,11 +37,10 @@ class Server
 		std::string						_password;
 		int								_sockfd;
 		static bool						_signal;
-		int								_sockcl;
 		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
-		std::map<int, std::string>		_clientBuffers; // Buffer para armazenar dados recebidos de cada cliente
+		std::map<int, std::string>		_clientBuffers;
 
 
 	public:
@@ -58,17 +57,13 @@ class Server
 		void handleInput(std::vector<std::string> str, int client_fd);
 		int checkEntry(std::vector<std::string> str, Client *cl);
 		void mainCommands(std::vector<std::string> str, Client *cl);
-		void sendMessageClient(int client_fd, const std::string& nickname, int error_code, const std::string& message);
+		void sendError(int client_fd, const std::string& nickname, int error_code, const std::string& message);
 		void sendMessageAll(std::string msg);
 		Channel* joinChannel(const std::string &name, Client *cl);
 		bool isChannelExist(std::string channelName);
 		Channel* getChannel(const std::string& name);
 		void checkNick(std::string str, Client *cl);
 		void checkUser(std::vector<std::string> str, Client *cl);
-		void clearChannels();
-// PFV		
-//		bool isNickInUse(const std::string& nick) const;
-// PFV
 		void closeChannels();
 		void closeClients();
 		
@@ -82,6 +77,7 @@ class Server
 		void MODE(std::vector<std::string> cmd, Client* cl);
 		void KICK(std::vector<std::string> cmd, Client* cl);
 		void TOPIC(std::vector<std::string> cmd, Client* cl);
+		void WHO(std::vector<std::string> cmd, Client* cl);
 		
 		// for debugging
 		void LCI(std::vector<std::string> cmd, Client* cl);

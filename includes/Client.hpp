@@ -32,16 +32,19 @@ class Client {
 		std::string _nickname;
 		std::string _user;
 		std::string _pass;
+		std::string _temporaryNick;
 
 	public:
 		Client();
 		int getFd();
 		void setFd(int fd);
 		void setIp(std::string ip);
+		void setTemporaryNick(std::string str) {_temporaryNick = str;};
 		std::string getIp() const {return _ip;};
 		std::string getNick() const {return _nickname;};
 		std::string getUser() const {return _user;};
 		std::string getPass() const {return _pass;};
+		std::string getTemporaryNick() {return _temporaryNick;};
 		void setNick(std::string str) {_nickname = str;};
 		void setUser(std::string str) {_user = str;}
 		void setPass(std::string str) {_pass = str;}

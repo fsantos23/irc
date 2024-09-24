@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ircserv.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: correia <correia@student.42.fr>            +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:20 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/19 09:00:52 by correia          ###   ########.fr       */
+/*   Updated: 2024/09/24 12:50:13 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,8 @@
 
 bool	invalid_arguments(int argc, char *argv[])
 {
-	if (argc != 3) {
+	if (argc != 3)
+	{
 		std::cout << RED "Usage: ./ircserv <port> <password>" WHI << std::endl;
 		return (1);
 	}
@@ -31,10 +32,14 @@ bool	invalid_arguments(int argc, char *argv[])
 		std::cerr << RED "Port Number Has To Be In Range [1024, 65535]" WHI << std::endl;
 		return (1);
 	}
+	if (std::string(argv[2]) == "")
+	{
+		std::cerr << RED "Missing Server Password" WHI << std::endl;
+		return (1);
+	}
 	return (0);
 }
 
-//PCC
 int main(int argc, char **argv)
 {
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 20:15:57 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/23 13:48:56 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,19 +26,6 @@ std::string	&Channel::getChannelName()
 	return (this->_name);
 }
 
-// PFV
-/*
-bool Channel::isNewClient(int fd)
-{
-	for (std::vector<Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-        if ((*it)->getFd() == fd)
-            return false;
-    }
-    return true;
-}
-*/
-
 bool Channel::isNewClient(int fd)
 {
 	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -49,30 +36,11 @@ bool Channel::isNewClient(int fd)
 	return (true);
 }
 
-
 void Channel::addClient(Client* client)
 {
 	_clients.push_back(client);
 	std::cout << "client joined: " << client->getNick() << std::endl;
 }
-// PFV
-/*
-void Channel::removeClientOperator(int cl_fd)
-{
-    // Remove client from the _clients map
-    for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if ((*it)->getFd() == cl_fd) 
-		{
-            _clients.erase(it);  // Remove from vector
-            break;  // Exit loop after removal
-        }
-    }
-	// Remove the client from the list of operators
-	std::vector<int>::iterator it_op = std::find(_operators.begin(), _operators.end(), cl_fd);
-	if (it_op != _operators.end())
-		_operators.erase(it_op);
-}
-*/
 
 void Channel::removeClientOperator(int cl_fd)
 {
@@ -127,12 +95,14 @@ void Channel::listChannelInfo() const
 	}
 	else
 	{
-		for (std::map<int, Client*>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
+		for (std::vector<int>::const_iterator it = _invitedClients.begin(); it != _invitedClients.end(); ++it)
 		{
-			if (isOperator(it->second))
-				std::cout << "@" << it->first << " ";
+			Client* client = getClientByFd(*it);
+			
+			if (client && isOperator(client))
+				std::cout << "@" << *it << " ";
 			else
-				std::cout << it->first << " ";
+				std::cout << *it << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -199,7 +169,7 @@ bool Channel::addOperator(Client* cl)
 	{
 		_operators.push_back(cl->getFd());
 		// Server console MSG
-		std::cout << cl->getNick() << " has been promoted to operator." << std::endl;
+		std::cout << cl->getNick() << " has been promoted to operator." << std::endl; 
 		return (true);
 	}
 }
@@ -228,16 +198,35 @@ void Channel::forceOperator()
 	addOperator(firstClient);
 }
 
-void Channel::inviteClient(Client* cl)
+bool Channel::inviteClient(Client* cl)
 {
-	// Adds a client to the list of invited clients.
-	_invitedClients[cl->getFd()] = cl;
-	std::cout << "Client " << cl->getNick() << " has been invited to the channel." << std::endl;
+	// Check if the client is not already an operator
+	if (isInvited(cl))
+	{
+		// Server console MSG
+		std::cout << "Client " << cl->getNick() << " is already Invited." << std::endl;
+		return (false);
+	}
+	else
+	{
+		_invitedClients.push_back(cl->getFd());
+		// Server console MSG
+		std::cout << cl->getNick() << " has been Invited." << std::endl;
+		return (true);
+	}
 }
 
-bool Channel::isInvited(Client* cl)
+bool Channel::isInvited(Client* cl) const
 {
-	return (_invitedClients.find(cl->getFd()) != _invitedClients.end());
+	return (std::find(_invitedClients.begin(), _invitedClients.end(), cl->getFd()) != _invitedClients.end());
+}
+
+void Channel::removeInvited(int cl_fd)
+{
+	std::vector<int>::iterator it = std::find(_invitedClients.begin(), _invitedClients.end(), cl_fd);
+
+	if (it != _invitedClients.end())
+		_invitedClients.erase(it);
 }
 
 void Channel::setKey(const std::string& key)
@@ -264,7 +253,6 @@ bool Channel::checkKey(const std::string& key)
 
 void Channel::sendMessageChannel(std::string msg)
 {
-	
 	std::cout << "Send message to Channel: " << _name << std::endl;
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
@@ -344,8 +332,23 @@ Client* Channel::getClientByFd(int fd) const
 {
 	for (std::vector<Client*>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-        if ((*it)->getFd() == fd)
-            return *it;
-    }
-    return NULL;
+		if ((*it)->getFd() == fd)
+			return *it;
+	}
+	return NULL;
+}
+
+void Channel::clearChannel()
+{
+	_clients.clear();
+	_operators.clear();
+	_invitedClients.clear();
+	_inviteOnly = false;
+	_key.clear();
+	_topic.clear();
+	_topicRestricted = false;
+	_userLimit = 0;
+
+	// Console Server MSG
+	std::cout << "Channel " << _name << " has been cleared and is ready for deletion." << std::endl;
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/17 20:16:14 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/23 13:22:16 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Channel
 		std::vector<Client*>		_clients;
 		std::vector<int>			_operators;
 		bool						_inviteOnly;
-		std::map<int, Client *>		_invitedClients;
+		std::vector<int>			_invitedClients;
 		std::string					_key;
 		std::string					_topic;
 		bool						_topicRestricted;
@@ -41,6 +41,7 @@ class Channel
 		std::string getTopic() const;
 		void setTopicRestricted(bool value);
 		bool isTopicRestricted() const;
+		void clearChannel();
 
 		// Client management
 		bool isNewClient(int fd);
@@ -59,8 +60,9 @@ class Channel
 		void removeOperator(int cl_fd);
 
 		// Invite management
-		void inviteClient(Client* cl);
-		bool isInvited(Client* cl);
+		bool inviteClient(Client* cl);
+		bool isInvited(Client* cl) const;
+		void removeInvited(int cl_fd);
 
 		// Key management
 		void setKey(const std::string& key);

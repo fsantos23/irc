@@ -13,7 +13,7 @@
 #include "../includes/Client.hpp"
 #include "../includes/Utils.hpp"
 
-Client::Client(void) : _fd(-1), _ip(""), _nickname("*"), _user("*"), _pass("")
+Client::Client(void) : _fd(-1), _ip(""), _nickname("*"), _user("*"), _pass(""), _temporaryNick("")
 {
 	std::cout << "Client created" << std::endl;
 }
