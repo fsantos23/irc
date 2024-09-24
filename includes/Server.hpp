@@ -37,7 +37,6 @@ class Server
 		std::string						_password;
 		int								_sockfd;
 		static bool						_signal;
-		int								_sockcl;
 		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;

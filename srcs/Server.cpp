@@ -12,7 +12,7 @@
 
 #include "../includes/Server.hpp"
 
-Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1), _sockcl(0)
+Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1)
 {
 
 }
@@ -156,7 +156,6 @@ void Server::acceptNewClient()
 	client_pollfd.revents = 0;
 	_pollfds.push_back(client_pollfd);
 
-	_sockcl++;
 }
 
 void Server::clearClient(int fd, std::string msg)
@@ -212,7 +211,7 @@ void Server::clearClient(int fd, std::string msg)
 
 void Server::handleClientMessage(int client_fd)
 {
-	char buffer[4096];
+	char buffer[510];
 	memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
@@ -1031,12 +1030,24 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	channel->listChannelInfo();
 }
 
-Channel* Server::getChannel(const std::string& name)
+void Server::WHO(std::vector<std::string> cmd, Client* cl)
 {
-	std::map<std::string, Channel*>::iterator it = _channels.find(name);
-	if (it != _channels.end())
-		return (it->second);
-	return (NULL);
+	if(cmd[1][0] == '#')
+	{
+		Channel *channel = getChannel(cmd[1]);
+		if(!channel)
+		{
+			sendError(cl->getFd(), cl->getNick(), 403, cmd[1] + " :No such channel");
+			return;
+		}
+		
+		std::string nameList = channel->getClientList();
+		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + channel->getChannelName() + " :" + nameList + "\r\n";
+		sendMessageToClient(cl->getFd(), nameReply);
+
+		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + channel->getChannelName() + " :End of /NAMES list\r\n";
+		sendMessageToClient(cl->getFd(), endOfNamesReply);
+	}
 }
 
 // for debugging
@@ -1072,30 +1083,18 @@ void Server::LCI(std::vector<std::string> cmd, Client* cl)
 	}
 }
 
+Channel* Server::getChannel(const std::string& name)
+{
+	std::map<std::string, Channel*>::iterator it = _channels.find(name);
+	if (it != _channels.end())
+		return (it->second);
+	return (NULL);
+}
+
 bool Server::isChannelExist(std::string channelName)
 {
 	if (_channels.find(channelName) != _channels.end())
 		return (true);
 	else
 		return (false);
-}
-
-void Server::WHO(std::vector<std::string> cmd, Client* cl)
-{
-	if(cmd[1][0] == '#')
-	{
-		Channel *channel = getChannel(cmd[1]);
-		if(!channel)
-		{
-			sendError(cl->getFd(), cl->getNick(), 403, cmd[1] + " :No such channel");
-			return;
-		}
-		
-		std::string nameList = channel->getClientList();
-		std::string nameReply = ":42_IRC 353 " + cl->getNick() + " = " + channel->getChannelName() + " :" + nameList + "\r\n";
-		sendMessageToClient(cl->getFd(), nameReply);
-
-		std::string endOfNamesReply = ":42_IRC 366 " + cl->getNick() + " " + channel->getChannelName() + " :End of /NAMES list\r\n";
-		sendMessageToClient(cl->getFd(), endOfNamesReply);
-	}
 }
