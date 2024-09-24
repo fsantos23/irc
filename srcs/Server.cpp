@@ -32,7 +32,7 @@ void Server::initServer()
 	while (true)
 	{
 		signal(SIGINT, handleSignal);
-		signal(SIGQUIT, handleSignal);
+		signal(SIGTSTP, SIG_IGN);
 		
 		int poll_count = poll(_pollfds.data(), _pollfds.size(), -1);
 
