@@ -6,14 +6,14 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:06 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:22:16 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/25 10:30:35 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
-#include <algorithm>
+//#include <algorithm>
 #include "Server.hpp"
 
 class Channel

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/24 12:22:04 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/25 11:38:04 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,11 @@
 
 Server::Server(int port, const std::string password) : _port(port), _password(password), _sockfd(-1)
 {
-
 }
 
 Server::~Server()
 {
 }
-
-bool Server::_signal = true;
 
 void Server::initServer()
 {
@@ -117,6 +114,7 @@ void Server::closeChannels()
 	for (std::map<std::string, Channel*>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		// free the memory allocated for the channel
 		delete it->second;
+
 	// Clean channel map
 	_channels.clear();
 }
@@ -155,7 +153,6 @@ void Server::acceptNewClient()
 	client_pollfd.events = POLLIN;
 	client_pollfd.revents = 0;
 	_pollfds.push_back(client_pollfd);
-
 }
 
 void Server::clearClient(int fd, std::string msg)
@@ -169,7 +166,7 @@ void Server::clearClient(int fd, std::string msg)
 		{
 			channel->removeClientOperator(fd);
 			// MSG to Server Console
-			std::cout << "Client " << fd << " removed from channel " << channel->getChannelName() << std::endl;
+			std::cout << GRE << "Client " << fd << " removed from channel " << channel->getChannelName() << WHI << std::endl;
 
 			// Send a message to the channel informing that the client has left
 			channel->sendMessageChannel(msg);
@@ -179,10 +176,8 @@ void Server::clearClient(int fd, std::string msg)
 				channel->forceOperator();
 			else if (channel->countClients() == 0)
 			{
-				std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
+				std::cout << GRE << "Channel " << channel->getChannelName() << " has been removed from the server." << WHI << std::endl;
 				channel->clearChannel();
-				/* delete channel;
-				_channels.erase(chan_it); */
 			}
 		}
 	}
@@ -513,7 +508,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		if(channel->countClients() == 0 && channel->countOperators() == 0)
 		{
 			channel->addOperator(cl);
-			std::cout << "Client " << cl->getFd() << " is the operator of channel " << channel->getChannelName() << std::endl;
+			std::cout << GRE << "Client " << cl->getFd() << " is the operator of channel " << channel->getChannelName() << WHI << std::endl;
 		}
 		// Check if the channel is invite-only and if the client is allowed to join.
 		if (channel->isInviteOnly() && !channel->isInvited(cl))
@@ -547,7 +542,7 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 		
 		// Add the client to the channel.
 		channel->addClient(cl);
-		std::cout << "Client " << cl->getFd() << " joined channel " << *it << std::endl;
+		std::cout << GRE << "Client " << cl->getFd() << " joined channel " << *it << WHI << std::endl;
 
 		std::string joinMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@localhost" + " " + cmd[0] + " " + *it + " * :realname""\r\n";
 		sendMessageToClient(cl->getFd(), joinMessage);
@@ -555,8 +550,6 @@ void Server::JOIN(std::vector<std::string> cmd, Client *cl)
 
 		if (key_it != keypass.end())
 			++key_it;
-
-		channel->listChannelInfo();
 	}
 }
 
@@ -569,12 +562,12 @@ Channel* Server::joinChannel(const std::string& name, Client *cl)
 	Channel* newChannel = new Channel(name);
 	_channels[name] = newChannel;
 	// Server Console MSG
-	std::cout << "Client " << cl->getFd() << " created channel " << name << std::endl;
+	std::cout << GRE << "Client " << cl->getFd() << " created channel " << name << WHI << std::endl;
 
 	// Add the client as the operator of the newly created channel
 	newChannel->addOperator(cl);
 	// Server Console MSG
-	std::cout << "Client " << cl->getFd() << " is the operator of channel " << name << std::endl;
+	std::cout << GRE << "Client " << cl->getFd() << " is the operator of channel " << name << WHI << std::endl;
 	
 	return (newChannel);
 }
@@ -610,7 +603,7 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 
 		if (channel->isNewClient(cl->getFd()))
 		{
-			std::cout << "Client : " << cl->getFd() << " is not on the channel" << std::endl;
+			std::cout << YEL << "Client : " << cl->getFd() << " is not on the channel" << WHI << std::endl;
 			sendError(cl->getFd(), cl->getNick(), 442, *it + " :You're not on that channel");
 			continue;
 		}
@@ -623,7 +616,7 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 
 		// Remove the client from the channel
 		channel->removeClientOperator(cl->getFd());
-		std::cout << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << std::endl;
+		std::cout << GRE << "Client : " << cl->getFd() << " left the channel " << channel->getChannelName() << WHI << std::endl;
 
 		if (channel->countOperators() == 0 && channel->countClients() > 0)
 		{
@@ -632,12 +625,8 @@ void Server::PART(std::vector<std::string> cmd, Client* cl)
 		else if (channel->countClients() == 0)
 		{
 			channel->clearChannel();
-			/* _channels.erase(*it); */
-			std::cout << "Channel " << channel->getChannelName() << " has been removed from the server." << std::endl;
+			std::cout << GRE << "Channel " << channel->getChannelName() << " has been removed from the server." << WHI << std::endl;
 		}
-
-		// For debugging
-		channel->listChannelInfo();
 	}
 }
 
@@ -658,7 +647,7 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 					msgb += "l";
 					aux = 1;
 					std::stringstream ss;
-					ss << it->second->getUserLimit();  // Converta o int para string
+					ss << it->second->getUserLimit();  // Convert int to string
 					info += ss.str() + " ";
 				}
 				if(!it->second->getKey().empty())
@@ -818,9 +807,6 @@ void Server::MODE(std::vector<std::string> cmd, Client* cl)
 	}
 	else
 		sendError(cl->getFd(), cl->getNick(), 472, mode + " :is unknown mode char to me");
-
-	// For debugging purposes
-	channel->listChannelInfo();
 }
 
 void Server::INVITE(std::vector<std::string> cmd, Client* cl)
@@ -889,8 +875,6 @@ void Server::INVITE(std::vector<std::string> cmd, Client* cl)
 	sendMessageToClient(cl->getFd(), inviteMessage);
 	std::string confirmationMessage = ":" + cl->getNick() + "!" + cl->getUser() + "@" + cl->getIp() + " " + cmd[0] + " " + invitedClient->getNick() + " " + channelName + "\r\n";
 	sendMessageToClient(invitedClient->getFd(), confirmationMessage);
-
-	channel->listChannelInfo();
 }
 
 void Server::KICK(std::vector<std::string> cmd, Client* cl)
@@ -957,7 +941,6 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 			++targetNick;
 
 		reason = "";
-		channel->listChannelInfo();
 	}
 }
 
@@ -1026,8 +1009,6 @@ void Server::TOPIC(std::vector<std::string> cmd, Client* cl)
 	channel->setTopic(newTopic);
 	sendMessageToClient(cl->getFd(), ":42_IRC 332 " + cl->getNick() + " " + channelName + " :" + newTopic + "\r\n");
 	channel->broadcast(cl, ":" + cl->getNick() + " TOPIC " + channelName + " :" + newTopic + "\r\n");
-
-	channel->listChannelInfo();
 }
 
 void Server::WHO(std::vector<std::string> cmd, Client* cl)
@@ -1079,7 +1060,6 @@ void Server::LCI(std::vector<std::string> cmd, Client* cl)
 			sendError(cl->getFd(), cl->getNick(), 403, *it + " :No such channel");
 			continue;
 		}
-		channel->listChannelInfo();
 	}
 }
 

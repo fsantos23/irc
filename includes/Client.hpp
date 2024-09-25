@@ -3,29 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: paulo <paulo@student.42.fr>                +#+  +:+       +#+        */
+/*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:17 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/13 11:27:45 by paulo            ###   ########.fr       */
+/*   Updated: 2024/09/25 10:29:24 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <sys/socket.h>
-#include <netinet/in.h>
+//#include <sys/socket.h>
+//#include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
+//#include <unistd.h>
+//#include <fcntl.h>
 #include <cstring>
 #include <iostream>
 #include <signal.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <map>
 #include <sstream>
 
-class Client {
+class Client
+{
 	private:
 		int _fd;
 		std::string _ip;

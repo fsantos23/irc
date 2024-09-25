@@ -6,7 +6,7 @@
 #    By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/21 13:22:14 by pviegas           #+#    #+#              #
-#    Updated: 2024/09/24 12:54:35 by pviegas          ###   ########.fr        #
+#    Updated: 2024/09/25 10:33:17 by pviegas          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ NAME = ircserv
 
 # Compiler options
 CXX			= c++
-CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g3 #-fsanitize=address -g3
+CXXFLAGS	= -Wall -Wextra -Werror -std=c++98 -g3 #-fsanitize=address
 INCLUDES	= -I ./include
 
 # Paths

@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:36 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:48:56 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/25 11:49:59 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ Channel::Channel(std::string _name) : _name(_name), _inviteOnly(false), _topicRe
 
 Channel::~Channel()
 {
-	
 }
 
 std::string	&Channel::getChannelName()
@@ -39,17 +38,15 @@ bool Channel::isNewClient(int fd)
 void Channel::addClient(Client* client)
 {
 	_clients.push_back(client);
-	std::cout << "client joined: " << client->getNick() << std::endl;
 }
 
 void Channel::removeClientOperator(int cl_fd)
 {
 	// Remove client from the _clients vector
-	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end(); /* sem incremento */)
+	for (std::vector<Client*>::iterator it = _clients.begin(); it != _clients.end();)
 	{
 		if ((*it)->getFd() == cl_fd) 
 		{
-			/* delete *it; */
 			it = _clients.erase(it);
 		}
 		else 
@@ -76,6 +73,7 @@ void Channel::broadcast(Client* self, const std::string &msg)
 	}
 }
 
+// for debugging purposes
 void Channel::listChannelInfo() const
 {
 	std::cout << std::endl << "     ***** Channel Details *****" << std::endl;
@@ -162,14 +160,12 @@ bool Channel::addOperator(Client* cl)
 	if (isOperator(cl))
 	{
 		// Server console MSG
-		std::cout << "Client " << cl->getNick() << " is already an operator." << std::endl;
+		std::cout << YEL << "Client " << cl->getNick() << " is already an operator." << WHI << std::endl;
 		return (false);
 	}
 	else
 	{
 		_operators.push_back(cl->getFd());
-		// Server console MSG
-		std::cout << cl->getNick() << " has been promoted to operator." << std::endl; 
 		return (true);
 	}
 }
@@ -191,8 +187,6 @@ void Channel::forceOperator()
 	Client* firstClient = *_clients.begin();
 	if (firstClient == NULL)
 	{
-		// Upgrades the first client in the list to operator privileges.
-		std::cout << "No clients in the channel." << std::endl;
 		return;
 	}
 	addOperator(firstClient);
@@ -204,14 +198,14 @@ bool Channel::inviteClient(Client* cl)
 	if (isInvited(cl))
 	{
 		// Server console MSG
-		std::cout << "Client " << cl->getNick() << " is already Invited." << std::endl;
+		std::cout << YEL << "Client " << cl->getNick() << " is already Invited." << WHI << std::endl;
 		return (false);
 	}
 	else
 	{
 		_invitedClients.push_back(cl->getFd());
 		// Server console MSG
-		std::cout << cl->getNick() << " has been Invited." << std::endl;
+		std::cout << GRE << cl->getNick() << " has been Invited." << WHI << std::endl;
 		return (true);
 	}
 }
@@ -246,14 +240,11 @@ bool Channel::hasKey() const
 
 bool Channel::checkKey(const std::string& key)
 {
-	std::cout << std::endl << "Checking key: " << key << std::endl;
-	std::cout << "Stored key: " << _key << std::endl << std::endl;
 	return (_key == key);
 }
 
 void Channel::sendMessageChannel(std::string msg)
 {
-	std::cout << "Send message to Channel: " << _name << std::endl;
 	std::vector<Client*>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); ++it)
 	{
@@ -348,7 +339,4 @@ void Channel::clearChannel()
 	_topic.clear();
 	_topicRestricted = false;
 	_userLimit = 0;
-
-	// Console Server MSG
-	std::cout << "Channel " << _name << " has been cleared and is ready for deletion." << std::endl;
 }

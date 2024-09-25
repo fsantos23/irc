@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:52:32 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/23 13:47:24 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/25 10:34:31 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,12 +36,10 @@ class Server
 		int 							_port;
 		std::string						_password;
 		int								_sockfd;
-		static bool						_signal;
 		std::vector <Client*>			_cl;
 		std::vector <struct pollfd>		_pollfds;
 		std::map<std::string, Channel*>	_channels;
 		std::map<int, std::string>		_clientBuffers;
-
 
 	public:
 		Server(int port, const std::string password);
@@ -66,7 +64,6 @@ class Server
 		void checkUser(std::vector<std::string> str, Client *cl);
 		void closeChannels();
 		void closeClients();
-		
 		
 		//commands
 		bool QUIT(Client *cl, std::vector<std::string> str);
