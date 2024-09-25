@@ -341,6 +341,8 @@ void Server::checkNick(std::string str, Client *cl)
 	}
 	if(!cl->getTemporaryNick().empty())
 		sendMessageToClient(cl->getFd(), ":" + cl->getTemporaryNick() + "!" + cl->getUser() + "@localhost NICK :" + str + "\r\n");
+	if(cl->getNick() != "*")
+		sendMessageToClient(cl->getFd(), ":" + cl->getNick() + "!" + cl->getUser() + "@localhost NICK :" + str + "\r\n");
 	cl->setNick(str);
 	// Msg to Server Console
 	std::cout << cl->getFd() << " changed their Nick to " << cl->getNick() << std::endl;
