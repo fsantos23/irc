@@ -6,7 +6,7 @@
 /*   By: pviegas <pviegas@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/12 10:50:46 by pviegas           #+#    #+#             */
-/*   Updated: 2024/09/25 11:38:04 by pviegas          ###   ########.fr       */
+/*   Updated: 2024/09/25 12:04:42 by pviegas          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -934,10 +934,13 @@ void Server::KICK(std::vector<std::string> cmd, Client* cl)
 		kickMessage += "\r\n";
 
 		channel->sendMessageChannel(kickMessage);
+		// Server console MSG
+		std::cout << YEL << "Client " << cl->getNick() << " kicked " << targetClient->getNick() << " from channel " << *channelName << WHI << std::endl;
 		// Remove Client from the channel
 		channel->removeClientOperator(targetClient->getFd());
 		// Remove Client from the invited list
 		channel->removeInvited(targetClient->getFd());
+
 
 		if (targetNick != target.end())
 			++targetNick;
